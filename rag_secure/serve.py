@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from rag_secure import db, demo, generator, ingest, security, source
+from rag_secure import __version__, db, demo, generator, ingest, security, source
 
 
 class AskRequest(BaseModel):
@@ -45,7 +45,7 @@ def create_app(cfg, users, col, llm, embedding_function=None):
         if demo_on:
             end_sessions(sessions.pop_all())
 
-    app = FastAPI(title="rag-secure-retrieval", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="rag-secure-retrieval", version=__version__, lifespan=lifespan)
     app.state.sessions = sessions
     header = cfg.get("api_key_header", "X-API-Key")
 
