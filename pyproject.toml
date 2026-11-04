@@ -24,3 +24,6 @@ version = { attr = "rag_secure.__version__" }
 
 [tool.setuptools]
 packages = ["rag_secure"]
+
+[tool.setuptools.package-data]
+rag_secure = ["ui/*", "ui/fonts/*", "ui/img/*"]

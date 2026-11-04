@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from rag_secure import db, demo, generator, ingest, security
@@ -55,6 +57,24 @@ def create_app(cfg, users, col, llm, embedding_function=None):
         if found is None:  # same reply for a missing key and a wrong key
             raise HTTPException(status_code=401, detail="invalid or missing API key")
         return found
+
+    ui_dir = Path(__file__).parent / "ui"
+    app.mount("/ui", StaticFiles(directory=ui_dir), name="ui")
+
+    @app.get("/", include_in_schema=False)
+    def page():
+        return FileResponse(ui_dir / "index.html")
+
+    @app.get("/mode")
+    def mode():
+        """What the page needs to know before anyone signs in. Nothing about documents or users."""
+        return {"demo": demo_on, "demo_users": bool(cfg.get("ui_demo_users", False)),
+                "max_files": cfg.get("demo_max_files", 3), "max_file_mb": cfg.get("demo_max_file_mb", 5),
+                "ttl": cfg.get("demo_ttl_seconds", 3600)}
+
+    @app.get("/me")
+    def me(user: Annotated[tuple, Depends(current_user)]):
+        return {"name": user[0], "groups": user[1]}
 
     @app.get("/health")
     def health():

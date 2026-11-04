@@ -160,3 +160,22 @@ def test_remove_folders_never_touches_a_real_group(tmp_path):
     (tmp_path / "finance").mkdir()
     demo.remove_folders(tmp_path, ["finance", "../finance"])
     assert (tmp_path / "finance").exists()
+
+
+def test_page_assets_and_mode_and_me(tmp_path):
+    client, _ = start(tmp_path)
+    page = client.get("/")
+    assert page.status_code == 200 and "<title>Ask Ginger</title>" in page.text
+    for path in ("/ui/app.css", "/ui/app.js", "/ui/fonts/bricolage-latin.woff2"):
+        assert client.get(path).status_code == 200
+    assert client.get("/mode").json()["demo"] is True
+    assert client.get("/me").status_code == 401
+    a = session(client)
+    me = client.get("/me", headers={"X-API-Key": a["key"]}).json()
+    assert me["groups"] == ["public", a["group"]]
+
+
+def test_mode_when_demo_is_off_and_for_a_real_user(tmp_path):
+    client, _ = build(tmp_path)
+    assert client.get("/mode").json()["demo"] is False
+    assert client.get("/me", headers={"X-API-Key": "k-eng"}).json() == {"name": "eng", "groups": ["public", "engineering"]}

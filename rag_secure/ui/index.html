@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask Ginger</title>
+<link rel="icon" href="/ui/img/ginger_waiting.png">
+<link rel="stylesheet" href="/ui/app.css">
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <h1>Ask Ginger</h1>
+    <p class="lede">Ask a question about your files. Ginger answers from the ones you can read and names the page. Simba keeps everything else locked.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="boot" class="boot" aria-live="polite">
+    <img src="/ui/img/ginger_waiting.png" alt="" width="104" height="110">
+    <p>Getting ready<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></p>
+  </section>
+
+  <section id="start" class="panel start" hidden>
+    <div class="body">
+    <h2 id="start-title">Start</h2>
+    <p id="start-text"></p>
+    <div id="start-demo" hidden>
+      <button class="btn primary" id="begin" type="button">Start my shelf</button>
+    </div>
+    <form id="start-key" hidden>
+      <label for="key">API key</label>
+      <input id="key" type="password" autocomplete="off" spellcheck="false">
+      <button class="btn primary" type="submit">Use this key</button>
+      <p id="demo-users" class="hint" hidden>
+        Demo users:
+        <button class="chip" type="button" data-key="demo-key-guest">guest</button>
+        <button class="chip" type="button" data-key="demo-key-eng">eng</button>
+        <button class="chip" type="button" data-key="demo-key-fin">fin</button>
+        <button class="chip" type="button" data-key="demo-key-admin">admin</button>
+      </p>
+    </form>
+    <p id="start-error" class="problem" role="alert" hidden></p>
+    </div>
+    <img src="/ui/img/simba_welcome.png" alt="Simba waves hello" width="190" height="190">
+  </section>
+
+  <div id="app" class="layout" hidden>
+    <div class="main-col">
+      <section class="stage" aria-live="polite">
+        <img id="mascot" src="/ui/img/ginger_waiting.png" alt="" width="226" height="240">
+        <div>
+          <p id="say" class="say"></p>
+          <p id="sub" class="sub"></p>
+        </div>
+      </section>
+
+      <form id="ask" class="ask">
+        <label for="question">What do you want to know?</label>
+        <textarea id="question" rows="3" maxlength="500" placeholder="Ask about a file on your shelf"></textarea>
+        <div class="row">
+          <button class="btn primary" id="go" type="submit">Ask Ginger</button>
+          <label class="check"><input type="checkbox" id="explain"> Show Ginger's working</label>
+        </div>
+      </form>
+
+      <section id="answer" aria-live="polite"></section>
+    </div>
+
+    <aside class="shelf" aria-labelledby="shelf-title">
+      <h2 id="shelf-title">Your shelf</h2>
+      <p id="access" class="hint"></p>
+      <div id="upload" hidden>
+        <input id="file" type="file" accept=".pdf,.md,.txt" hidden>
+        <button class="btn secondary" id="pick" type="button">Add a file</button>
+        <p class="hint" id="limits"></p>
+        <ul id="files" class="files"></ul>
+        <p id="upload-note" class="problem" role="alert" hidden></p>
+      </div>
+      <p id="expiry" class="hint"></p>
+      <button class="link" id="over" type="button" hidden>Start a new shelf</button>
+    </aside>
+  </div>
+</main>
+
+<footer class="wrap">
+  <p>Everything runs on your machine. Each answer names the document, and the page for PDFs.</p>
+</footer>
+<script src="/ui/app.js"></script>
+</body>
+</html>

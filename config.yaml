@@ -30,6 +30,8 @@ api_key_header: X-API-Key
 admin_users: [admin]     # may call POST /ingest
 log_question_text: false # false: the query log keeps only a hash of each question
 
+ui_demo_users: true      # the page shows buttons for the public demo keys in eval/users.yaml; set false for your own users
+
 # Demo mode: visitors get a private session, upload files into it and ask about them. Off by default.
 demo_mode: false
 demo_max_file_mb: 5
