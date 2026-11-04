@@ -236,7 +236,7 @@ TBC
 
 ## Licence
 
-MIT. Copyright (c) 2026 Onkar Gupta. The demo data is CC0 (see `data/LICENSE-DATA.txt`).
+MIT. Copyright (c) 2026 Onkar Gupta. The demo data is CC0 (see `data/LICENSE-DATA.txt`). The page uses the Bricolage Grotesque font under the SIL Open Font Licence (`rag_secure/ui/fonts/OFL.txt`). The mascot images in `rag_secure/ui/img/` show Ginger and Simba, the author's dogs.
 
 ## Author
 
