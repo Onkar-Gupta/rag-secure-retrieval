@@ -165,7 +165,7 @@ def test_remove_folders_never_touches_a_real_group(tmp_path):
 def test_page_assets_and_mode_and_me(tmp_path):
     client, _ = start(tmp_path)
     page = client.get("/")
-    assert page.status_code == 200 and "<title>Ask Ginger</title>" in page.text
+    assert page.status_code == 200 and "<title>Ginger & Simba</title>" in page.text
     for path in ("/ui/app.css", "/ui/app.js", "/ui/fonts/bricolage-latin.woff2"):
         assert client.get(path).status_code == 200
     assert client.get("/mode").json()["demo"] is True
@@ -179,3 +179,61 @@ def test_mode_when_demo_is_off_and_for_a_real_user(tmp_path):
     client, _ = build(tmp_path)
     assert client.get("/mode").json()["demo"] is False
     assert client.get("/me", headers={"X-API-Key": "k-eng"}).json() == {"name": "eng", "groups": ["public", "engineering"]}
+
+
+def test_source_context_rebuilds_the_page_and_marks_the_chunk(tmp_path):
+    from test_retriever import KeywordEmbedder
+
+    from rag_secure import db as _db
+    from rag_secure import source
+    from rag_secure.ingest import ingest as _ingest
+
+    docs = tmp_path / "docs" / "public"
+    docs.mkdir(parents=True)
+    text = "".join(f"sentence {i:03d}. " for i in range(40))
+    (docs / "long.md").write_text(text, encoding="utf-8")
+    _ingest(tmp_path / "docs", tmp_path / "c", tmp_path / "t.sqlite", 60, 20, KeywordEmbedder())
+    conn = _db.connect(tmp_path / "t.sqlite")
+    ids = [r[0] for r in conn.execute("SELECT chunk_id FROM chunks ORDER BY chunk_id")]
+    for cid in (ids[0], ids[3], ids[-1]):
+        got = source.context(conn, cid, 60, 20)
+        assert got["before"] + got["highlight"] + got["after"] == text
+        assert got["highlight"] == conn.execute("SELECT text FROM chunks WHERE chunk_id=?", (cid,)).fetchone()[0]
+    assert source.context(conn, "nope#0000", 60, 20) is None
+
+
+def test_source_and_file_follow_the_same_group_rules_as_search(tmp_path):
+    client, cfg = start(tmp_path)
+    a, b = session(client), session(client)
+    assert up(client, a["key"], "notes.md", body=b"budget plan notes").status_code == 200
+    chunk = f"{a['group']}/notes.md#0000"
+    doc = f"{a['group']}/notes.md"
+    own = client.get("/source", params={"chunk": chunk}, headers={"X-API-Key": a["key"]})
+    assert own.status_code == 200 and own.json()["highlight"] == "budget plan notes" and own.json()["kind"] == "text"
+    f = client.get("/file", params={"doc": doc}, headers={"X-API-Key": a["key"]})
+    assert f.status_code == 200 and f.content == b"budget plan notes"
+    for path, params in (("/source", {"chunk": chunk}), ("/file", {"doc": doc})):  # another session: same 404 as missing
+        other = client.get(path, params=params, headers={"X-API-Key": b["key"]})
+        missing = client.get(path, params={k: v + "x" for k, v in params.items()}, headers={"X-API-Key": b["key"]})
+        assert other.status_code == 404 and other.json() == missing.json()
+        assert client.get(path, params=params).status_code == 401
+    # a session cannot read the engineering document, and admin can; a quarantined one is hidden from everyone
+    eng_chunk, eng_doc = "engineering/deploy.md#0000", "engineering/deploy.md"
+    assert client.get("/source", params={"chunk": eng_chunk}, headers={"X-API-Key": a["key"]}).status_code == 404
+    assert client.get("/source", params={"chunk": eng_chunk}, headers={"X-API-Key": "k-admin"}).status_code == 200
+    from rag_secure import db as _db
+    _db.set_quarantine(_db.connect(cfg["db_path"]), eng_doc)
+    assert client.get("/file", params={"doc": eng_doc}, headers={"X-API-Key": "k-admin"}).status_code == 404
+    for bad in ("../w/t.sqlite", "..\\w\t.sqlite", "/etc/passwd", "", "public/../../w/t.sqlite"):
+        assert client.get("/file", params={"doc": bad}, headers={"X-API-Key": "k-admin"}).status_code == 404
+
+
+def test_pdf_source_reports_the_right_page(tmp_path):
+    client, _ = start(tmp_path)
+    a = session(client)
+    assert up(client, a["key"], "plan.pdf", body=make_pdf(["intro page", "budget figures page"])).status_code == 200
+    page2 = client.post("/ask", json={"question": "budget"}, headers={"X-API-Key": a["key"]}).json()["sources"][0]
+    got = client.get("/source", params={"chunk": page2}, headers={"X-API-Key": a["key"]}).json()
+    assert got["kind"] == "pdf" and got["page"] == 2 and "budget" in got["highlight"]
+    pdf = client.get("/file", params={"doc": got["doc_id"]}, headers={"X-API-Key": a["key"]})
+    assert pdf.headers["content-type"] == "application/pdf" and pdf.content[:4] == b"%PDF"

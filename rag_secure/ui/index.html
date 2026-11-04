@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ask Ginger</title>
+<title>Ginger & Simba</title>
 <link rel="icon" href="/ui/img/ginger_waiting.png">
 <link rel="stylesheet" href="/ui/app.css">
 </head>
 <body>
 <header class="band">
   <div class="wrap">
-    <h1>Ask Ginger</h1>
-    <p class="lede">Ask a question about your files. Ginger answers from the ones you can read and names the page. Simba keeps everything else locked.</p>
+    <h1>Ginger &amp; Simba</h1>
+    <p class="lede">Ask a question about your files. Ginger fetches the answer and shows you the page. Simba keeps everything else locked.</p>
   </div>
 </header>
 
@@ -82,6 +82,20 @@
     </aside>
   </div>
 </main>
+
+<dialog id="viewer" aria-labelledby="v-title">
+  <div class="v-head">
+    <h2 id="v-title"></h2>
+    <button class="link" id="v-close" type="button">Close</button>
+  </div>
+  <p id="v-meta" class="hint"></p>
+  <p id="v-passage" class="passage"></p>
+  <div id="v-pdf" hidden>
+    <button class="btn secondary" id="v-show" type="button"></button>
+    <iframe id="v-frame" title="The original PDF" hidden></iframe>
+  </div>
+  <p id="v-error" class="problem" role="alert" hidden></p>
+</dialog>
 
 <footer class="wrap">
   <p>Everything runs on your machine. Each answer names the document, and the page for PDFs.</p>

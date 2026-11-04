@@ -124,10 +124,13 @@ function cited(text, prov) {
   let last = 0;
   for (const m of text.matchAll(/\[([^\]]+)\]/g)) {
     p.append(text.slice(last, m.index));
-    const tag = document.createElement("span");
+    const tag = document.createElement("button");
+    tag.type = "button";
     tag.className = "tag";
     const hit = prov.find((x) => x.chunk_id === m[1]);
     tag.textContent = hit ? label(hit) : m[1];
+    tag.title = "Show where this comes from";
+    tag.addEventListener("click", () => openSource(m[1], tag.textContent, text));
     p.append(tag);
     last = m.index + m[0].length;
   }
@@ -146,7 +149,12 @@ function render(body) {
     list.className = "sources";
     for (const p of body.provenance) {
       const li = document.createElement("li");
-      li.textContent = `${label(p)} (${groupName(p.group)}${p.ingested_at ? `, added ${p.ingested_at}` : ""})`;
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = "link";
+      open.textContent = label(p);
+      open.addEventListener("click", () => openSource(p.chunk_id, label(p), body.answer));
+      li.append(open, ` (${groupName(p.group)}${p.ingested_at ? `, added ${p.ingested_at}` : ""})`);
       list.append(li);
     }
     card.append(list);
@@ -208,6 +216,7 @@ async function ask(e) {
   if (r.status === 200) {
     render(r.body);
     stage(r.body.found ? "answered" : "locked");
+    if (r.body.found) hop();
   } else if (r.status === 401) {
     key = null; store.del("key"); store.del("ends"); showStart(say(401));
   } else {
@@ -255,6 +264,85 @@ async function upload() {
   }
 }
 
+function hop() {
+  const card = $(".stage");
+  card.classList.remove("hop");
+  void card.offsetWidth;
+  card.classList.add("hop");
+}
+
+let pdfUrl = null;
+function closeViewer() {
+  if (pdfUrl) { URL.revokeObjectURL(pdfUrl); pdfUrl = null; }
+  $("#v-frame").removeAttribute("src");
+  $("#v-frame").hidden = true;
+}
+
+function clip(text, n, atEnd) {
+  if (text.length <= n) return text;
+  return atEnd ? `…${text.slice(-n)}` : `${text.slice(0, n)}…`;
+}
+
+function sentenceParts(text) {
+  return text.split(/(?<=[.!?])(\s+)/);
+}
+
+function bestSentence(parts, answer) {
+  const words = new Set(answer.replace(/\[[^\]]*\]/g, "").toLowerCase().match(/[a-z0-9]{3,}/g) || []);
+  let best = 0, at = -1;
+  parts.forEach((p, i) => {
+    if (i % 2) return;
+    const n = (p.toLowerCase().match(/[a-z0-9]{3,}/g) || []).filter((w) => words.has(w)).length;
+    if (n > best) { best = n; at = i; }
+  });
+  return at;
+}
+
+async function openSource(chunkId, title, answer = "") {
+  closeViewer();
+  $("#v-title").textContent = title;
+  $("#v-meta").textContent = "";
+  $("#v-passage").replaceChildren();
+  $("#v-pdf").hidden = true;
+  $("#v-error").hidden = true;
+  const dlg = $("#viewer");
+  if (!dlg.open) dlg.showModal();
+  let r;
+  try { r = await call(`/source?chunk=${encodeURIComponent(chunkId)}`); } catch { r = { status: 0 }; }
+  if (r.status !== 200) {
+    $("#v-error").textContent = r.status === 401 ? say(401) : "That source is no longer available.";
+    $("#v-error").hidden = false;
+    return;
+  }
+  const s = r.body;
+  $("#v-meta").textContent = `${s.page ? `Page ${s.page}. ` : ""}The light highlight is the passage Ginger read. The strong highlight is the sentence closest to the answer.`;
+  const chunk = document.createElement("span");
+  chunk.className = "chunk";
+  const parts = sentenceParts(s.highlight);
+  const hit = bestSentence(parts, answer);
+  parts.forEach((p, i) => {
+    if (i === hit) { const m = document.createElement("mark"); m.textContent = p; chunk.append(m); } else chunk.append(p);
+  });
+  $("#v-passage").append(clip(s.before, 500, true), chunk, clip(s.after, 500, false));
+  (chunk.querySelector("mark") || chunk).scrollIntoView({ block: "center" });
+  if (s.kind === "pdf") {
+    const btn = $("#v-show");
+    btn.textContent = `Show the PDF at page ${s.page}`;
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/file?doc=${encodeURIComponent(s.doc_id)}`, { headers: { "X-API-Key": key } });
+        if (!res.ok) throw new Error("gone");
+        pdfUrl = URL.createObjectURL(await res.blob());
+        $("#v-frame").src = `${pdfUrl}#page=${s.page}&navpanes=0`;
+        $("#v-frame").hidden = false;
+      } catch { $("#v-error").textContent = "Could not open the PDF."; $("#v-error").hidden = false; }
+      btn.disabled = false;
+    };
+    $("#v-pdf").hidden = false;
+  }
+}
+
 function over() { key = null; store.del("key"); store.del("ends"); showStart(); }
 
 async function init() {
@@ -267,6 +355,9 @@ async function init() {
   $("#pick").addEventListener("click", () => $("#file").click());
   $("#file").addEventListener("change", upload);
   $("#over").addEventListener("click", over);
+  $("#v-close").addEventListener("click", () => $("#viewer").close());
+  $("#viewer").addEventListener("close", closeViewer);
+  $(".stage").addEventListener("animationend", (e) => { if (e.animationName === "hop") $(".stage").classList.remove("hop"); });
   if (key) await enter(); else showStart();
 }
 init();
