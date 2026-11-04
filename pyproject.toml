@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Onkar Gupta" }]
 keywords = ["rag", "retrieval-augmented-generation", "llm-security"]
-dependencies = ["PyYAML==6.*"]
+dependencies = ["PyYAML==6.*", "chromadb==1.5.9", "pypdf==6.21.4"]
 
 [project.optional-dependencies]
 dev = ["pytest==9.*", "ruff==0.*"]

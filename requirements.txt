@@ -1,3 +1,5 @@
+chromadb==1.5.9
+pypdf==6.21.4
 pytest==9.2.0
 PyYAML==6.0.3
 ruff==0.17.3
