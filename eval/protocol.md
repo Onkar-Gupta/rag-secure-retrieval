@@ -176,7 +176,7 @@ Any leak under D is a failed result: fix the bug, rerun, and report both the fai
 
 Dated entries only. Each entry says what changed, why, and whether any result existed at the time.
 
-(none yet)
+**4 Nov 2026 (no result existed).** `data/docs/LICENSE-DATA.txt` moved to `data/LICENSE-DATA.txt`. Ingestion rejects any file directly inside `data/docs/` because it has no group, so a licence file cannot live there. No document, question, canary or pass mark changed. Section 3 still names the old path.
 
 ## 12. Known biases and limits
 
