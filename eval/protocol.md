@@ -244,6 +244,8 @@ Dated entries only. Each entry says what changed, why, and whether any result ex
 
 *Limits, stated now.* This hides the difference in the search step only. A search that takes longer than the floor (for example in a much larger index) is not padded; the floor should be raised with the index. The model step, reply length and network timing are not touched. The wait costs up to 10 ms of one CPU core per request. Whether an outside observer could have used the 0.05 ms gap was never tested, so this is a precaution, not a proven repair.
 
+*Clarification of acceptance rule (2), written before the padded run.* "Later than the floor" is measured from outside the function, which includes a few microseconds of timer overhead, so a search counts as late when it takes more than the floor plus 0.1 ms. The count is reported as `searches_later_than_floor`.
+
 ## 12. Known biases and limits
 
 - **Self-test.** The same person wrote the documents, the questions, the answer spans and the code. This is not an independent benchmark, and the README says so.

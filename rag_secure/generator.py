@@ -79,7 +79,8 @@ def ask_with_trace(question, groups, col, conn, cfg, llm, embedding=None, delimi
     Returns (result, trace). The trace lists the top-k chunks the user is ALLOWED to see, closest
     first, each marked `used` when it passed the cut-off and so reached the model. Chunks from
     other groups never appear anywhere here, because they were never retrieved."""
-    retrieved = retrieve(col, conn, question, groups, k=cfg["top_k"], embedding=embedding)
+    retrieved = retrieve(col, conn, question, groups, k=cfg["top_k"], embedding=embedding,
+                         floor_ms=cfg.get("search_floor_ms", 0))
     for h in retrieved:
         h["used"] = h["distance"] <= cfg["relevance_threshold"]
     used = [h for h in retrieved if h["used"]]

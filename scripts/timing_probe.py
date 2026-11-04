@@ -6,6 +6,7 @@ are in the index?  FULL index vs PUBLIC-ONLY index, user `guest`, 120 questions,
     python scripts/timing_probe.py        # writes reports/timing_probe.json
 """
 
+import argparse
 import json
 import random
 import shutil
@@ -26,6 +27,7 @@ from rag_secure.ingest import ingest, open_collection
 from rag_secure.retriever import retrieve
 
 WARMUP, REPEATS, RESAMPLES, SEED = 20, 200, 10000, 0
+LATE_MARGIN_MS = 0.1  # a padded search measures the floor plus a few microseconds of timer overhead
 
 
 def build(docs, tmp, name, cfg):
@@ -33,13 +35,16 @@ def build(docs, tmp, name, cfg):
     return open_collection(Path(tmp) / name), db.connect(Path(tmp) / f"{name}.sqlite")
 
 
-def timed(col, conn, text, vec, groups, k):
+def timed(col, conn, text, vec, groups, k, floor_ms=0):
     t = time.perf_counter_ns()
-    hits = retrieve(col, conn, text, groups, k=k, embedding=vec)
+    hits = retrieve(col, conn, text, groups, k=k, embedding=vec, floor_ms=floor_ms)
     return time.perf_counter_ns() - t, [h["chunk_id"] for h in hits]
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--floor-ms", type=float, default=0, help="pad every search to this many ms")
+    floor = ap.parse_args().floor_ms
     cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     questions = ev.load_questions()
     vecs = ev.embed_questions(questions)
@@ -49,10 +54,10 @@ def main():
         shutil.copytree(ROOT / "data" / "docs" / "public", public_only / "public")
         full = build(ROOT / "data" / "docs", tmp, "full", cfg)
         pub = build(public_only, tmp, "pub", cfg)
-        diffs, med_full, med_pub, same_ids = [], [], [], 0
+        diffs, med_full, med_pub, same_ids, late = [], [], [], 0, 0
         started = time.time()
         for n, q in enumerate(questions, 1):
-            args = (q["question"], vecs[q["id"]], groups, cfg["top_k"])
+            args = (q["question"], vecs[q["id"]], groups, cfg["top_k"], floor)
             for _ in range(WARMUP):
                 timed(*full, *args)
                 timed(*pub, *args)
@@ -62,6 +67,7 @@ def main():
                 b, ids_p = timed(*pub, *args)
                 tf.append(a)
                 tp.append(b)
+            late += sum(t > (floor + LATE_MARGIN_MS) * 1e6 for t in tf + tp) if floor else 0
             mf, mp = statistics.median(tf), statistics.median(tp)
             med_full.append(mf)
             med_pub.append(mp)
@@ -82,9 +88,11 @@ def main():
         "ci95_ms": ci,
         "rule_interval_includes_zero": ci[0] <= 0 <= ci[1],
         "same_top5_ids_in_both_indexes": f"{same_ids} of {m}",
+        "floor_ms": floor,
+        "searches_later_than_floor": f"{late} of {m * REPEATS * 2}" if floor else "not applicable",
         "meta": ev.meta(),
     }
-    ev.write(ROOT / "reports" / "timing_probe.json", result)
+    ev.write(ROOT / "reports" / ("timing_probe_padded.json" if floor else "timing_probe.json"), result)
     print(json.dumps({k: v for k, v in result.items() if k != "meta"}, indent=1))
 
 

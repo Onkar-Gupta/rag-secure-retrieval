@@ -121,3 +121,19 @@ def test_ready_made_embedding_gives_the_same_answer_and_the_same_filter(store):
     by_vector = retrieve(*store, "ignored text", ["public", "engineering"], k=3, embedding=vec)
     assert [h["chunk_id"] for h in by_text] == [h["chunk_id"] for h in by_vector]
     assert all(h["group"] != "finance" for h in by_vector)
+
+
+def test_floor_ms_makes_a_fast_search_take_at_least_that_long():
+    import time
+
+    class Col:
+        def query(self, **kw):
+            return {"ids": [[]], "documents": [[]], "metadatas": [[]], "distances": [[]]}
+
+    from rag_secure import db as _db
+    from rag_secure.retriever import retrieve as _retrieve
+
+    conn = _db.connect(":memory:")
+    t = time.perf_counter()
+    _retrieve(Col(), conn, "q", ["public"], embedding=[0.0], floor_ms=30)
+    assert (time.perf_counter() - t) * 1000 >= 30

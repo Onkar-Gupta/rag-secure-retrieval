@@ -12,6 +12,7 @@ min_page_chars: 20   # a PDF page with less text than this is reported (probably
 # Retrieval. top_k is fixed by the protocol; the threshold was chosen on the dev split and is FROZEN.
 top_k: 5
 relevance_threshold: 0.6079088449478149
+search_floor_ms: 10   # every search takes at least this long, so timing does not show what other groups hold. Raise it for a larger index.
 
 # Answering. One MIT-licensed model chosen by the owner (protocol Amendments, 4 Nov 2026).
 not_found_response: "I could not find an answer in the documents you can access."
