@@ -8,6 +8,17 @@
 <link rel="stylesheet" href="/ui/app.css">
 </head>
 <body>
+<div id="splash" class="splash" role="status" aria-live="polite">
+  <div class="splash-card">
+    <p class="splash-title" aria-hidden="true">Ginger &amp; Simba</p>
+    <div class="pair">
+      <img id="sp-ginger" class="sp-ginger" src="/ui/img/ginger_looking.png" alt="" width="260" height="215">
+      <img id="sp-simba" class="sp-simba" src="/ui/img/simba_waiting.png" alt="" width="230" height="230">
+    </div>
+    <div class="loadbar" aria-hidden="true"><i id="sp-bar"></i></div>
+    <p id="sp-text" class="sp-text">Fetching the shelf</p>
+  </div>
+</div>
 <header class="band">
   <div class="wrap">
     <h1>Ginger &amp; Simba</h1>
@@ -16,11 +27,6 @@
 </header>
 
 <main class="wrap">
-  <section id="boot" class="boot" aria-live="polite">
-    <img src="/ui/img/ginger_waiting.png" alt="" width="104" height="110">
-    <p>Getting ready<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></p>
-  </section>
-
   <section id="start" class="panel start" hidden>
     <div class="body">
     <h2 id="start-title">Start</h2>

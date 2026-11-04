@@ -58,7 +58,6 @@ const WORDS = {
 const say = (status) => (typeof WORDS[status] === "function" ? WORDS[status]() : WORDS[status]);
 
 function showStart(message) {
-  $("#boot").hidden = true;
   $("#app").hidden = true;
   $("#start").hidden = false;
   $("#start-title").textContent = mode.demo ? "Bring a file, then ask about it" : "Use your API key";
@@ -79,7 +78,6 @@ async function enter() {
   const r = await call("/me");
   if (r.status !== 200) { key = null; store.del("key"); showStart(r.status === 401 ? say(401) : "Could not reach the service."); return; }
   me = r.body;
-  $("#boot").hidden = true;
   $("#start").hidden = true;
   $("#app").hidden = false;
   $("#access").textContent = `On your shelf: ${me.groups.map(groupName).join(", ")}.`;
@@ -345,8 +343,47 @@ async function openSource(chunkId, title, answer = "") {
 
 function over() { key = null; store.del("key"); store.del("ends"); showStart(); }
 
+const POSE_FILES = ["ginger", "simba"].flatMap((d) =>
+  ["waiting", "looking", "answering", "locked", "error", "welcome"].map((p) => `/ui/img/${d}_${p}.png`));
+
+// The loading screen. The bar is real work: every pose is preloaded, then the mode and the session are checked.
+// It shows for at least a moment so the pair can be seen, and a click skips it.
+function splash() {
+  const el = $("#splash");
+  const total = POSE_FILES.length + 2;
+  const quick = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let done = 0, min = quick ? 400 : 2200;
+  const t0 = performance.now();
+  el.addEventListener("click", () => { min = 0; });
+  POSE_FILES.forEach((f) => { const i = new Image(); i.onload = i.onerror = () => done++; i.src = f; });
+  const text = $("#sp-text");
+  const words = ["Fetching the shelf", "Setting out the lantern", "Simba is checking the locks"];
+  return {
+    step() { done++; },
+    finish() {
+      return new Promise((resolve) => {
+        const tick = () => {
+          const shown = Math.min(done / total, min ? (performance.now() - t0) / min : 1);
+          $("#sp-bar").style.width = `${Math.round(shown * 100)}%`;
+          if (shown < 1) text.textContent = words[Math.min(2, Math.floor(shown * 3))];
+          if (shown >= 1 && done >= total) {
+            $("#sp-ginger").src = "/ui/img/ginger_welcome.png";
+            $("#sp-simba").src = "/ui/img/simba_welcome.png";
+            text.textContent = "Welcome";
+            el.classList.add("ready");
+            setTimeout(() => { el.classList.add("done"); resolve(); }, quick ? 100 : 1300);
+          } else requestAnimationFrame(tick);
+        };
+        tick();
+      });
+    },
+  };
+}
+
 async function init() {
+  const loading = splash();
   try { const r = await call("/mode"); if (r.status === 200) mode = { ...mode, ...r.body }; } catch { /* keep defaults */ }
+  loading.step();
   $("#begin").addEventListener("click", begin);
   $("#start-key").addEventListener("submit", (e) => { e.preventDefault(); key = $("#key").value.trim(); store.set("key", key); enter(); });
   document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => { $("#key").value = c.dataset.key; }));
@@ -359,5 +396,7 @@ async function init() {
   $("#viewer").addEventListener("close", closeViewer);
   $(".stage").addEventListener("animationend", (e) => { if (e.animationName === "hop") $(".stage").classList.remove("hop"); });
   if (key) await enter(); else showStart();
+  loading.step();
+  await loading.finish();
 }
 init();
