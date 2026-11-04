@@ -157,20 +157,32 @@ dialog::backdrop { background: color-mix(in srgb, var(--teal) 62%, transparent);
 .splash.done { opacity: 0; visibility: hidden; pointer-events: none; }
 .splash-card { width: min(560px, 100%); padding: 22px 24px 20px; border-radius: 20px; background: var(--mist); color: var(--teal); text-align: center; box-shadow: 0 30px 70px -30px rgb(0 0 0 / 0.7); border-bottom: 6px solid var(--gold); }
 .splash-title { margin: 0; font-size: clamp(1.9rem, 6vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
-.pair { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin: 22px 0 10px; }
+.pair { position: relative; display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin: 36px 0 10px; }
 .pair img { height: 190px; width: auto; max-width: 48%; object-fit: contain; }
 .loadbar { height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--teal) 16%, var(--mist)); overflow: hidden; }
 .loadbar i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--gold); }
 .sp-text { margin: 12px 0 0; font-weight: 600; font-size: 1.05rem; }
 @media (max-width: 480px) { .pair img { height: 130px; } }
 
+/* The high five: Ginger turns to face Simba, they step together, and a spark pops where the paws meet. */
+.splash.ready .sp-ginger { scale: -1 1; translate: 22px 0; }
+.splash.ready .sp-simba { translate: -22px -23px; }
+.spark { position: absolute; left: 50%; top: 62px; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; border: 5px solid var(--gold); opacity: 0; pointer-events: none; }
+.spark::before { content: ""; position: absolute; inset: 50%; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: var(--gold);
+  box-shadow: 0 -44px 0 var(--gold), 0 44px 0 var(--gold), 44px 0 0 var(--gold), -44px 0 0 var(--gold), 31px 31px 0 var(--gold), -31px 31px 0 var(--gold), 31px -31px 0 var(--gold), -31px -31px 0 var(--gold); }
+.splash.clap .spark { opacity: 1; }
+
 @media (prefers-reduced-motion: no-preference) {
   .splash-card { animation: rise 0.45s ease both; }
   .sp-ginger { animation: sniff 1.2s ease-in-out infinite; transform-origin: 50% 100%; }
   .sp-simba { animation: bob 1.6s ease-in-out infinite; transform-origin: 50% 100%; }
-  .splash.ready .sp-ginger, .splash.ready .sp-simba { animation: cheer 0.6s ease 2; }
+  .sp-ginger, .sp-simba { transition: translate 0.38s cubic-bezier(0.3, 0.8, 0.3, 1); }
+  .splash.ready .sp-ginger, .splash.ready .sp-simba { animation: none; }
+  .splash.clap .sp-ginger, .splash.clap .sp-simba { animation: smack 0.45s ease; }
+  .splash.clap .spark { animation: burst 0.6s ease-out both; }
   .splash.done .splash-card { transform: translateY(-12px) scale(0.98); transition: transform 0.6s ease; }
 }
 @keyframes sniff { 0%, 100% { transform: translateX(0) rotate(0); } 50% { transform: translateX(6px) rotate(1.5deg); } }
 @keyframes bob { 50% { transform: translateY(-6px); } }
-@keyframes cheer { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px) rotate(-1.5deg); } }
+@keyframes smack { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-10px); } 60% { transform: translateY(2px); } }
+@keyframes burst { from { opacity: 1; transform: scale(0.2); } to { opacity: 0; transform: scale(1.9); } }

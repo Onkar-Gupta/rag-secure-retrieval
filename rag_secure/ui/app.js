@@ -369,9 +369,10 @@ function splash() {
           if (shown >= 1 && done >= total) {
             $("#sp-ginger").src = "/ui/img/ginger_welcome.png";
             $("#sp-simba").src = "/ui/img/simba_welcome.png";
-            text.textContent = "Welcome";
+            text.textContent = "High five!";
             el.classList.add("ready");
-            setTimeout(() => { el.classList.add("done"); resolve(); }, quick ? 100 : 1300);
+            setTimeout(() => el.classList.add("clap"), quick ? 0 : 400);
+            setTimeout(() => { el.classList.add("done"); resolve(); }, quick ? 150 : 1900);
           } else requestAnimationFrame(tick);
         };
         tick();
