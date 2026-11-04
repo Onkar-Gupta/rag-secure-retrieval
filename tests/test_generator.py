@@ -102,3 +102,23 @@ def test_ollama_call_sends_the_right_request_and_reads_the_reply():
 def test_unreachable_ollama_gives_a_helpful_error():
     with pytest.raises(RuntimeError, match="Ollama is not reachable"):
         generator.ollama_llm("m", "http://127.0.0.1:9", timeout=2)("s", "u")
+
+
+def test_prompt_shows_a_real_id_as_the_example_and_repeats_the_rule_last():
+    system, user = generator.build_prompt("What?", HITS, NF)
+    assert "[finance/a.md#0000]" in system and "without the word DOC" in system
+    assert user.rstrip().endswith("in square brackets.")
+    assert generator.build_prompt("What?", [], NF)[0].count("folder/file.md#0000") == 1  # no hits: neutral example
+
+
+def test_a_stray_doc_prefix_inside_the_brackets_is_tolerated():
+    text, valid, invalid = generator.check_citations("Yes [DOC finance/a.md#0000].", {"finance/a.md#0000"})
+    assert valid == ["finance/a.md#0000"] and invalid == [] and "DOC" not in text
+
+
+def test_not_found_reply_with_citations_tacked_on_is_still_the_fixed_reply():
+    llm = lambda s, u: f"{NF} [public/b.md#0001] [finance/a.md#0000]"
+    assert generator.answer("q", HITS, llm, NF) == {
+        "answer": NF, "sources": [], "invalid_citations": [], "found": False}
+    real = generator.answer("q", HITS, lambda s, u: f"Holiday is 27 days [public/b.md#0001]. {NF}", NF)
+    assert real["found"] is True  # a real answer that merely mentions the phrase is not swallowed
