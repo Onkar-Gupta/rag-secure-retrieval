@@ -102,7 +102,7 @@ def build():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(make_pdf([[title, ""] + textwrap.wrap(body, 80) for title, body in pages]))
         print(f"wrote {path.relative_to(ROOT)} ({len(pages)} pages)")
-    (OUT / "LICENSE-DATA.txt").write_text(
+    (OUT.parent / "LICENSE-PDF-DATA.txt").write_text(
         "CC0 1.0 Universal. Author: Onkar Gupta. All content is fictional (Ogento Systems).\n", encoding="utf-8")
 
 

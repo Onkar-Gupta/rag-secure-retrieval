@@ -52,3 +52,9 @@ def test_a_question_whose_type_disagrees_with_the_askers_access_is_caught(tmp_pa
     path.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
     errors, *_ = check_pdf_data.check(root)
     assert any("pq03 is answerable but the asker may not read" in e for e in errors)
+
+
+def test_every_file_in_the_pdf_folder_sits_inside_a_group_folder():
+    """Ingestion refuses a file with no group folder, so nothing may sit at the top of data/docs_pdf."""
+    top_level = [p.name for p in (ROOT / "data" / "docs_pdf").iterdir() if p.is_file()]
+    assert top_level == []
