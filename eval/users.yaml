@@ -1,0 +1,13 @@
+users:
+  guest:
+    groups: [public]
+    api_key: TBC-key-guest
+  eng:
+    groups: [public, engineering]
+    api_key: TBC-key-eng
+  fin:
+    groups: [public, finance]
+    api_key: TBC-key-fin
+  admin:
+    groups: [public, engineering, finance]
+    api_key: TBC-key-admin
