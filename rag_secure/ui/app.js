@@ -32,7 +32,7 @@ function stage(name, sub, head) {
   img.alt = `${dog === "ginger" ? "Ginger" : "Simba"}, ${pose}`;
   $("#say").textContent = head || say;
   $("#sub").textContent = sub === undefined ? subtitle : sub;
-  const card = $(".stage");
+  const card = $(".hero");
   card.classList.toggle("busy", name === "looking" || name === "sniff");
   for (const el of [$("#say"), $("#sub")]) { el.classList.remove("fade"); void el.offsetWidth; el.classList.add("fade"); }
 }
@@ -60,6 +60,7 @@ const say = (status) => (typeof WORDS[status] === "function" ? WORDS[status]() :
 function showStart(message) {
   $("#app").hidden = true;
   $("#start").hidden = false;
+  stage("welcome", mode.demo ? "Start your shelf, add a file, then ask about it." : "Use your API key to start.");
   $("#start-title").textContent = mode.demo ? "Bring a file, then ask about it" : "Use your API key";
   $("#start-text").textContent = mode.demo
     ? `Add a PDF to a private shelf and ask Ginger about it. Only you can read what you add, and the shelf clears itself after ${Math.round(mode.ttl / 60)} minutes.`
@@ -263,7 +264,7 @@ async function upload() {
 }
 
 function hop() {
-  const card = $(".stage");
+  const card = $(".hero");
   card.classList.remove("hop");
   void card.offsetWidth;
   card.classList.add("hop");
@@ -372,7 +373,7 @@ function splash() {
             text.textContent = "High five!";
             el.classList.add("ready");
             setTimeout(() => el.classList.add("clap"), quick ? 0 : 400);
-            setTimeout(() => { el.classList.add("done"); resolve(); }, quick ? 150 : 1900);
+            setTimeout(() => { el.classList.add("done"); document.body.classList.remove("pre"); resolve(); }, quick ? 150 : 1900);
           } else requestAnimationFrame(tick);
         };
         tick();
@@ -381,7 +382,18 @@ function splash() {
   };
 }
 
+function parallax() {
+  if (matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
+  addEventListener("pointermove", (e) => {
+    const h = $(".hero").style;
+    h.setProperty("--mx", ((e.clientX / innerWidth) * 2 - 1).toFixed(3));
+    h.setProperty("--my", ((e.clientY / innerHeight) * 2 - 1).toFixed(3));
+  });
+}
+
 async function init() {
+  setTimeout(() => document.body.classList.remove("pre"), 7000); // never leave the page hidden if something stalls
+  parallax();
   const loading = splash();
   try { const r = await call("/mode"); if (r.status === 200) mode = { ...mode, ...r.body }; } catch { /* keep defaults */ }
   loading.step();
@@ -395,7 +407,7 @@ async function init() {
   $("#over").addEventListener("click", over);
   $("#v-close").addEventListener("click", () => $("#viewer").close());
   $("#viewer").addEventListener("close", closeViewer);
-  $(".stage").addEventListener("animationend", (e) => { if (e.animationName === "hop") $(".stage").classList.remove("hop"); });
+  $(".hero").addEventListener("animationend", (e) => { if (e.animationName === "hop") $(".hero").classList.remove("hop"); });
   if (key) await enter(); else showStart();
   loading.step();
   await loading.finish();

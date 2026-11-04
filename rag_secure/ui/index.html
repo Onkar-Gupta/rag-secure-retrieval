@@ -7,7 +7,7 @@
 <link rel="icon" href="/ui/img/ginger_waiting.png">
 <link rel="stylesheet" href="/ui/app.css">
 </head>
-<body>
+<body class="pre">
 <div id="splash" class="splash" role="status" aria-live="polite">
   <div class="splash-card">
     <p class="splash-title" aria-hidden="true">Ginger &amp; Simba</p>
@@ -20,10 +20,16 @@
     <p id="sp-text" class="sp-text">Fetching the shelf</p>
   </div>
 </div>
-<header class="band">
-  <div class="wrap">
-    <h1>Ginger &amp; Simba</h1>
-    <p class="lede">Ask a question about your files. Ginger fetches the answer and shows you the page. Simba keeps everything else locked.</p>
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <h1><span class="ln">Ginger</span><span class="ln">&amp; Simba</span></h1>
+      <p id="say" class="say"></p>
+      <p id="sub" class="sub"></p>
+    </div>
+    <div class="hero-dog">
+      <img id="mascot" src="/ui/img/simba_welcome.png" alt="" width="300" height="320">
+    </div>
   </div>
 </header>
 
@@ -49,19 +55,10 @@
     </form>
     <p id="start-error" class="problem" role="alert" hidden></p>
     </div>
-    <img src="/ui/img/simba_welcome.png" alt="Simba waves hello" width="190" height="190">
   </section>
 
   <div id="app" class="layout" hidden>
     <div class="main-col">
-      <section class="stage" aria-live="polite">
-        <img id="mascot" src="/ui/img/ginger_waiting.png" alt="" width="226" height="240">
-        <div>
-          <p id="say" class="say"></p>
-          <p id="sub" class="sub"></p>
-        </div>
-      </section>
-
       <form id="ask" class="ask">
         <label for="question">What do you want to know?</label>
         <textarea id="question" rows="3" maxlength="500" placeholder="Ask about a file on your shelf"></textarea>
