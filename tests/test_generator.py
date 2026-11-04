@@ -236,3 +236,19 @@ def test_word_overlap_is_high_for_matching_text_and_low_for_unrelated_text():
     assert close == 1.0 and far == 0.0
     assert generator.number_support("Yes [a#0].", hits)["segments"][0]["word_overlap"] is None  # too short to judge
     assert generator.number_support("Version", hits)["version"] == generator.NUMBER_CHECK_VERSION
+
+
+def test_a_reworded_true_sentence_is_supported_because_the_match_is_by_sentence():
+    text = "Ogento Systems was founded in 2014 by Maren Falk and Tobias Reinholt in the city of Brightmoor."
+    answer = "Ogento Systems was founded by Maren Falk and Tobias Reinholt in 2014 [a#0]."
+    assert generator.number_support(answer, [chunk("a#0", text)])["counts"]["supported"] == 1
+
+
+def test_a_same_unit_swap_inside_a_sentence_with_several_numbers_is_caught():
+    text = ("Engineering receives the largest share, 18.4 million euros, which is 39 percent of the total. "
+            "The total operating budget for 2026 is 47.2 million euros.")
+    good = "Engineering receives the largest share, 18.4 million euros, which is 39 percent of the total [a#0]."
+    swapped = good.replace("18.4", "47.2")  # 47.2 is in the chunk, but in a different sentence
+    assert generator.number_support(good, [chunk("a#0", text)])["counts"]["supported"] == 1
+    out = generator.number_support(swapped, [chunk("a#0", text)])
+    assert out["counts"]["unsupported"] == 1 and out["segments"][0]["missing"] == ["47.2"]

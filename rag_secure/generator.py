@@ -123,10 +123,10 @@ def ollama_llm(model, url="http://localhost:11434", temperature=0, seed=0, max_t
     return call
 
 
-# ---- report-only support checks (version 3) -------------------------------------------------------
+# ---- report-only support checks (version 4) -------------------------------------------------------
 # Not used in the served answer. They measure how well an answer sticks to the chunks it cites.
 
-NUMBER_CHECK_VERSION = 3
+NUMBER_CHECK_VERSION = 4
 _TOKEN = re.compile(r"\d+(?:[.,:]\d+)*|[a-z]+|[.!?;\n]")
 _CITED_SEGMENT = re.compile(r"([^\[\]]*)\[([^\[\]\n]+)\]")
 _UNITS = {w: i for i, w in enumerate(
@@ -225,19 +225,39 @@ def _content_words(tokens):
     return {_stem(w) for kind, w in tokens if kind == "word" and w not in _STOP and len(w) > 2}
 
 
+_SUPPORT_RULE = "sentence"  # 'sentence' (used), 'local' (version 3) or 'both'; chosen after comparing all three
+_OVERLAP_MIN = 0.5  # share of an answer sentence's content words that a chunk sentence must contain
+
+
+def _sentences(tokens):
+    """[(numbers, content words)] for each sentence, split at sentence breaks."""
+    out, nums, words = [], set(), set()
+    for kind, value in [*tokens, ("break", ".")]:
+        if kind == "break":
+            if nums or words:
+                out.append((nums, words))
+            nums, words = set(), set()
+        elif kind == "num":
+            nums.add(value)
+        elif value not in _STOP and len(value) > 2:
+            words.add(_stem(value))
+    return out
+
+
 def number_support(answer, hits):
     """Report-only check on a cleaned answer with [id] citations.
 
     The answer is split into segments, each ending at a citation (text after the last citation is an
     uncited segment). A segment with no numbers is 'no_numbers'. Otherwise a number counts as supported
-    only if a cited chunk contains the same number AND shares at least one neighbouring content word
-    with it (so a year or a stray digit elsewhere in the chunk does not count). A segment is
-    'supported' when all its numbers are, else 'unsupported'. Each segment also gets `word_overlap`:
-    the share of its content words that appear in the cited chunks (a crude check of meaning, with no
-    pass mark). Spelled-out numbers are read ('six', 'twenty-seven'). This catches a wrong or invented
-    figure; it cannot tell that a sentence is false in words."""
+    only if it sits in a sentence of a cited chunk that contains at least half of the content words of
+    the answer sentence it appears in (a bare number with no other words needs only to be present).
+    A segment is 'supported' when all its numbers are, else 'unsupported'. Each segment also gets
+    `word_overlap`: the share of its content words found in the cited chunks (a crude check of meaning,
+    no pass mark). Spelled-out numbers and ordinals are read ('six', 'twenty-seven', 'fifteenth'). This
+    catches a wrong or invented figure; it cannot tell that a sentence is false in words."""
     chunk_tokens = {h["chunk_id"]: tokenise(h["text"]) for h in hits}
     chunk_ctx = {cid: _contexts(t) for cid, t in chunk_tokens.items()}
+    chunk_sentences = {cid: _sentences(t) for cid, t in chunk_tokens.items()}
     segments, end = [], 0
     for m in _CITED_SEGMENT.finditer(answer):
         ids = [re.sub(r"^DOC\s+", "", p.strip()) for p in m.group(2).split(",") if p.strip()]
@@ -249,12 +269,19 @@ def number_support(answer, hits):
     for text, ids in segments:
         tokens = tokenise(text)
         asked = _contexts(tokens)
+        answer_sentences = _sentences(tokens)
         missing, elsewhere = [], []
         for number, contexts in asked.items():
             cited = [chunk_ctx[i][number] for i in ids if i in chunk_ctx and number in chunk_ctx[i]]
             found = [c for per_chunk in cited for c in per_chunk]
             # no context words in the answer: presence suffices; otherwise share up to _MIN_SHARED of them
-            ok = any((not a) or len(a & c) >= min(_MIN_SHARED, len(a)) for a in contexts for c in found)
+            local_ok = any((not a) or len(a & c) >= min(_MIN_SHARED, len(a)) for a in contexts for c in found)
+            # the number must sit in a cited-chunk sentence that shares enough of the answer sentence's words
+            sentence_ok = any(
+                number in an and (not aw or len(aw & cw) / len(aw) >= _OVERLAP_MIN)
+                for an, aw in answer_sentences for i in ids if i in chunk_sentences
+                for cn, cw in chunk_sentences[i] if number in cn)
+            ok = {"local": local_ok, "sentence": sentence_ok, "both": local_ok and sentence_ok}[_SUPPORT_RULE]
             if not ok:
                 missing.append(number)
                 if found:
