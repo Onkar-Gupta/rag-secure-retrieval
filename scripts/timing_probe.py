@@ -44,7 +44,9 @@ def timed(col, conn, text, vec, groups, k, floor_ms=0):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--floor-ms", type=float, default=0, help="pad every search to this many ms")
-    floor = ap.parse_args().floor_ms
+    ap.add_argument("--margin-ms", type=float, default=None, help="equivalence margin for the interval")
+    args_cli = ap.parse_args()
+    floor, margin = args_cli.floor_ms, args_cli.margin_ms
     cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     questions = ev.load_questions()
     vecs = ev.embed_questions(questions)
@@ -89,10 +91,12 @@ def main():
         "rule_interval_includes_zero": ci[0] <= 0 <= ci[1],
         "same_top5_ids_in_both_indexes": f"{same_ids} of {m}",
         "floor_ms": floor,
+        "margin_ms": margin,
+        "rule_interval_within_margin": None if margin is None else (-margin <= ci[0] and ci[1] <= margin),
         "searches_later_than_floor": f"{late} of {m * REPEATS * 2}" if floor else "not applicable",
         "meta": ev.meta(),
     }
-    ev.write(ROOT / "reports" / ("timing_probe_padded.json" if floor else "timing_probe.json"), result)
+    ev.write(ROOT / "reports" / (f"timing_probe_padded_{floor:g}ms.json" if floor else "timing_probe.json"), result)
     print(json.dumps({k: v for k, v in result.items() if k != "meta"}, indent=1))
 
 
