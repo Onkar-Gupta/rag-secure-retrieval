@@ -297,3 +297,15 @@ def test_the_official_run_refuses_a_second_run_and_a_dirty_tree(tmp_path, monkey
     (tmp_path / "generation.json").write_text("{}", encoding="utf-8")
     with pytest.raises(SystemExit, match="ONE run"):
         run_eval.generation(args)
+
+
+def test_a_dev_only_rehearsal_can_be_summarised_and_pass_marks_without_data_are_none(store):
+    env, questions, users = gen_env(store, gen_llm)
+    dev_only = [dict(q, split="dev") for q in questions]
+    rows = [run_eval.run_one(j, env) for j in run_eval.build_jobs(dev_only, users)]
+    s = run_eval.generation_summary(rows, users)  # used to raise: there is no test split to compare against
+    v = s["verdict"]
+    assert v["pass_mark_4_citation_accuracy_test_at_least_0.80"] is None
+    assert v["pass_mark_5_negative_rejection_test_at_least_0.90"] is None
+    assert v["pass_mark_1_leakage_under_D_zero_context_and_canary"] is True
+    assert s["condition_D"]["dev"]["n"] == 5 and s["condition_D"]["test"]["n"] == 0
