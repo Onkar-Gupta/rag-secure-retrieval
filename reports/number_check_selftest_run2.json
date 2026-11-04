@@ -1,0 +1,168 @@
+{
+ "stage": "number-check",
+ "checker_version": 3,
+ "acceptance_fixed_before_run": {
+  "true_sentences_wrongly_flagged_max": 0.05,
+  "wrong_number_caught_min": 0.95,
+  "other_number_in_chunk_caught_min": 0.8,
+  "spelled_out_number_supported_min": 0.95,
+  "word_overlap_matched_median_min": 0.8,
+  "word_overlap_mismatched_median_max": 0.4
+ },
+ "true_sentences_flagged": {
+  "k": 0,
+  "n": 54,
+  "rate": 0.0,
+  "wilson95": [
+   6.938893903907228e-18,
+   0.06641586678100189
+  ],
+  "rule_of_three_upper95": 0.05555555555555555,
+  "failures": [
+   {
+    "question": "q003",
+    "sentence": "Ogento Systems was founded in 2014 by Maren Falk and Tobias Reinholt in the city of Brightmoor."
+   },
+   {
+    "question": "q004",
+    "sentence": "The company employs 212 people across four offices as of the start of 2026."
+   },
+   {
+    "question": "q005",
+    "sentence": "Every full-time employee receives 27 days of paid annual leave per calendar year, not counting public holidays."
+   },
+   {
+    "question": "q006",
+    "sentence": "Unused leave can be carried into the next year, up to a limit of 5 days, and any excess is lost on 31 March."
+   },
+   {
+    "question": "q007",
+    "sentence": "The headquarters is at 41 Quarry Lane, Brightmoor, and houses 96 desks across three floors."
+   },
+   {
+    "question": "q008",
+    "sentence": "The Harrowgate office opened in September 2021 and is home to the customer support team."
+   },
+   {
+    "question": "q009",
+    "sentence": "Your laptop is delivered to your home address at least 3 working days before your start date."
+   },
+   {
+    "question": "q010",
+    "sentence": "On the first day, your buddy meets you at 09:30 and takes you to the induction session in the Lighthouse room."
+   },
+   {
+    "question": "q012",
+    "sentence": "The company logo comes in two colours, midnight blue and amber, and must not be stretched or recoloured."
+   },
+   {
+    "question": "q013",
+    "sentence": "The Starter plan costs 149 euros per month and includes up to 25 vehicles."
+   }
+  ]
+ },
+ "wrong_number_caught": {
+  "k": 79,
+  "n": 79,
+  "rate": 1.0,
+  "wilson95": [
+   0.9536271631644004,
+   1.0
+  ],
+  "failures": []
+ },
+ "other_number_in_chunk_caught": {
+  "k": 177,
+  "n": 201,
+  "rate": 0.8805970149253731,
+  "wilson95": [
+   0.8284831505893563,
+   0.9184354440711032
+  ],
+  "failures": [
+   {
+    "question": "q013",
+    "sentence": "The Starter plan costs 649 euros per month and includes up to 25 vehicles."
+   },
+   {
+    "question": "q014",
+    "sentence": "The Growth plan costs 649 euros per month and includes up to 25 vehicles."
+   },
+   {
+    "question": "q014",
+    "sentence": "The Growth plan costs 149 euros per month and includes up to 300 vehicles."
+   },
+   {
+    "question": "q015",
+    "sentence": "Employees are expected in the office on at least 20 days per week, usually Tuesday and Thursday."
+   },
+   {
+    "question": "q022",
+    "sentence": "Bursts of up to 6000 requests in one second are allowed before throttling begins."
+   },
+   {
+    "question": "q043",
+    "sentence": "The total approved operating budget for 2026 is 7.2 million euros."
+   },
+   {
+    "question": "q043",
+    "sentence": "The total approved operating budget for 7.2 is 18.4 million euros."
+   },
+   {
+    "question": "q044",
+    "sentence": "Engineering receives the largest share, 7.2 million euros, which is 1.1 percent of the total."
+   },
+   {
+    "question": "q044",
+    "sentence": "Engineering receives the largest share, 7.2 million euros, which is 2025 percent of the total."
+   },
+   {
+    "question": "q044",
+    "sentence": "Engineering receives the largest share, 1.1 million euros, which is 39 percent of the total."
+   }
+  ]
+ },
+ "spelled_out_supported": {
+  "k": 40,
+  "n": 40,
+  "rate": 1.0,
+  "wilson95": [
+   0.9123754607496077,
+   1.0
+  ],
+  "failures": []
+ },
+ "word_overlap": {
+  "matched_median": 1.0,
+  "matched_n": 60,
+  "mismatched_median": 0.0,
+  "mismatched_n": 60
+ },
+ "meta": {
+  "date": "2026-11-04T18:30:05+05:30",
+  "commit": "f5aac12b0d282bc144041d7a113d3979a893254a",
+  "working_tree_dirty": false,
+  "python": "3.11.9",
+  "os": "Windows-10-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "cpu_threads": 22,
+  "ram_gb": 15.4,
+  "gpu": "not used (ONNX Runtime on CPU)",
+  "packages": {
+   "chromadb": "1.5.9",
+   "onnxruntime": "1.31.1",
+   "pypdf": "6.21.4",
+   "PyYAML": "6.0.3"
+  },
+  "embedding_model": "chroma default all-MiniLM-L6-v2 (ONNX)",
+  "bootstrap": "10000 resamples, seed 0"
+ },
+ "verdict": {
+  "true_sentences_wrongly_flagged": true,
+  "wrong_number_caught": true,
+  "other_number_in_chunk_caught": true,
+  "spelled_out_supported": true,
+  "word_overlap_matched": true,
+  "word_overlap_mismatched": true
+ }
+}

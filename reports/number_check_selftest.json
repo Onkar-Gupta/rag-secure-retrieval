@@ -1,6 +1,6 @@
 {
  "stage": "number-check",
- "checker_version": 3,
+ "checker_version": 4,
  "acceptance_fixed_before_run": {
   "true_sentences_wrongly_flagged_max": 0.05,
   "wrong_number_caught_min": 0.95,
@@ -72,17 +72,25 @@
   "failures": []
  },
  "other_number_in_chunk_caught": {
-  "k": 177,
+  "k": 187,
   "n": 201,
-  "rate": 0.8805970149253731,
+  "rate": 0.9303482587064676,
   "wilson95": [
-   0.8284831505893563,
-   0.9184354440711032
+   0.886494779805217,
+   0.958060232457917
   ],
   "failures": [
    {
     "question": "q013",
     "sentence": "The Starter plan costs 649 euros per month and includes up to 25 vehicles."
+   },
+   {
+    "question": "q013",
+    "sentence": "The Starter plan costs 149 euros per month and includes up to 649 vehicles."
+   },
+   {
+    "question": "q014",
+    "sentence": "The Growth plan costs 649 euros per month and includes up to 149 vehicles."
    },
    {
     "question": "q014",
@@ -93,12 +101,12 @@
     "sentence": "The Growth plan costs 149 euros per month and includes up to 300 vehicles."
    },
    {
-    "question": "q015",
-    "sentence": "Employees are expected in the office on at least 20 days per week, usually Tuesday and Thursday."
+    "question": "q014",
+    "sentence": "The Growth plan costs 25 euros per month and includes up to 300 vehicles."
    },
    {
-    "question": "q022",
-    "sentence": "Bursts of up to 6000 requests in one second are allowed before throttling begins."
+    "question": "q043",
+    "sentence": "The total approved operating budget for 2026 is 39 million euros."
    },
    {
     "question": "q043",
@@ -106,19 +114,11 @@
    },
    {
     "question": "q043",
+    "sentence": "The total approved operating budget for 39 is 18.4 million euros."
+   },
+   {
+    "question": "q043",
     "sentence": "The total approved operating budget for 7.2 is 18.4 million euros."
-   },
-   {
-    "question": "q044",
-    "sentence": "Engineering receives the largest share, 7.2 million euros, which is 1.1 percent of the total."
-   },
-   {
-    "question": "q044",
-    "sentence": "Engineering receives the largest share, 7.2 million euros, which is 2025 percent of the total."
-   },
-   {
-    "question": "q044",
-    "sentence": "Engineering receives the largest share, 1.1 million euros, which is 39 percent of the total."
    }
   ]
  },
@@ -139,9 +139,9 @@
   "mismatched_n": 60
  },
  "meta": {
-  "date": "2026-11-04T18:30:05+05:30",
-  "commit": "f5aac12b0d282bc144041d7a113d3979a893254a",
-  "working_tree_dirty": false,
+  "date": "2026-11-04T18:44:29+05:30",
+  "commit": "5a0ebaee143ec2d2b42b845fce282a4b59563ce4",
+  "working_tree_dirty": true,
   "python": "3.11.9",
   "os": "Windows-10-10.0.26200-SP0",
   "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
