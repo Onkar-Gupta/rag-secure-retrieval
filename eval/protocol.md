@@ -226,6 +226,14 @@ Dated entries only. Each entry says what changed, why, and whether any result ex
 
 **4 Nov 2026, after the PDF check run (the result existed; nothing below changes a pass mark or a number).** The PDF check was run once on commit cbb1bc6 from a clean tree (`reports/pdf_check.json`: 6 PDFs, 18 chunks, 12 questions, 48 retrieval runs per condition, 12 answers). One disclosure: the first attempt to start the run stopped immediately, before any question or model call, and produced no result, because the PDF set's licence file sat at the top of `data/docs_pdf/`, where ingestion refuses a file that belongs to no group. The file was moved to `data/LICENSE-PDF-DATA.txt`, the generator script and a guard test were updated, and the run was then made once. No PDF, question, pass mark or setting changed.
 
+**4 Nov 2026, search-time probe: a separate, pre-registered check (written before the script exists; no result of it existed).** Question: for the same user and the same question, does the search step take a different time when other groups' documents are in the index? If it does, a user could in principle learn that a restricted document exists by timing. This changes nothing in the main results.
+
+*Design.* Two indexes built with the frozen settings: FULL (all of `data/docs`) and PUBLIC-ONLY (a copy holding only `data/docs/public`). The user is `guest` (group public) and the questions are the 120 in `eval/questions.jsonl`. Question vectors are computed once, so only the Chroma query via `retrieve` is timed. Each question is run 200 times in each index after 20 untimed warm-up runs, alternating FULL and PUBLIC-ONLY on every repeat to share any drift. Per question, the statistic is median FULL time minus median PUBLIC-ONLY time. The report gives the median of those 120 differences, a 95% percentile bootstrap interval over questions (10,000 resamples, seed 0), the medians of each index, and whether the top 5 chunk ids were identical in the two indexes.
+
+*Acceptance rule, fixed now.* The interval includes zero. If it excludes zero, that is reported as a measured timing difference, the README says so in neutral words, and padding is planned for v1.1. Nothing is tuned and the rule is not moved after the run.
+
+*Limits, stated now.* One machine, one process, the Chroma default index; FULL holds three times the documents of PUBLIC-ONLY (30 against 10), which is the size gap the check is designed to see. A mean difference that is real but below the timer noise cannot be told from zero here. This probe does not cover network timing, the model step, or reply length (the fixed reply is always 104 bytes, see the earlier entries).
+
 ## 12. Known biases and limits
 
 - **Self-test.** The same person wrote the documents, the questions, the answer spans and the code. This is not an independent benchmark, and the README says so.
