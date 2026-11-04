@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 689 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Computer vision jobs for freshers in the UK: where the demand comes from) Tj T* () Tj T* (Computer vision engineers are hired wherever a camera replaces a human eye. In) Tj T* (the UK, typical employers include makers of driver assistance and autonomous) Tj T* (vehicle systems, factories that inspect products on a production line, retailers) Tj T* (that count customers and track stock, health technology firms that read medical) Tj T* (images, and drone and security companies that watch large sites. Graduate roles) Tj T* (often carry titles such as graduate machine learning engineer, junior computer) Tj T* (vision engineer or research assistant.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 769 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Skills UK employers ask for from new graduates) Tj T* () Tj T* (Job adverts for graduate computer vision roles usually ask for strong Python,) Tj T* (experience with PyTorch or TensorFlow, and practical use of OpenCV. Employers) Tj T* (like to see object detection and tracking work with models from the YOLO family.) Tj T* (Teams that ship products also want deployment skills, such as exporting a model) Tj T* (to ONNX, running it on a small device, and measuring its speed. Knowing how to) Tj T* (evaluate a model honestly matters as much as training it. A degree in computer) Tj T* (science, engineering, mathematics or a related field is the usual starting) Tj T* (point, and a master's degree in AI is common among applicants.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 643 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (How freshers stand out, and the right to work) Tj T* () Tj T* (Entry level roles attract many applicants, so evidence counts. A public project) Tj T* (with a clear README, measured results and an honest list of limits shows more) Tj T* (than a list of course certificates. Candidates who explain what failed, and how) Tj T* (they tested it, are easier to trust. A short demo that a recruiter can run in) Tj T* (minutes helps too. International graduates should check each advert for the) Tj T* (right to work in the UK, because some employers cannot offer visa sponsorship) Tj T* (and say so in the advert.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000253 00000 n 
+0000000993 00000 n 
+0000001119 00000 n 
+0000001939 00000 n 
+0000002065 00000 n 
+0000002759 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2829
+%%EOF
