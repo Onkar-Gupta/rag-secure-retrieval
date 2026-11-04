@@ -176,7 +176,7 @@ def test_every_source_carries_provenance_and_the_model_never_sees_it(tmp_path):
     body = post(client, "k-eng", "deploy").json()
     assert body["sources"] == ["engineering/deploy.md#0000"]
     [p] = body["provenance"]
-    assert set(p) == {"chunk_id", "doc_id", "group", "uploader", "ingested_at"}
+    assert set(p) == {"chunk_id", "doc_id", "group", "uploader", "ingested_at", "page"} and p["page"] is None
     assert p["doc_id"] == "engineering/deploy.md" and p["group"] == "engineering" and p["uploader"] == "cli"
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", p["ingested_at"])
     assert all("uploader" not in text and "ingested_at" not in text for text in seen)  # response-only data

@@ -34,8 +34,10 @@ def main(argv=None):
     if args.command == "ingest":
         counts = ingest.ingest(
             cfg["docs_dir"], cfg["chroma_dir"], cfg["db_path"], cfg["chunk_size"], cfg["chunk_overlap"],
-            uploader="cli",
+            uploader="cli", min_page_chars=cfg.get("min_page_chars", 20),
         )
+        for page in counts["pages_without_text"]:
+            print(f"warning: {page} has almost no text (probably a scan). Run OCR on the PDF first, then ingest again.")
         print(
             f"documents added {counts['added']}, skipped {counts['skipped']}, "
             f"removed {counts['removed']}, chunks written {counts['chunks']}"

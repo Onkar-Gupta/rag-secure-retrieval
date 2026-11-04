@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import re
 from pathlib import Path
 
 import chromadb
@@ -19,9 +20,14 @@ def chunk_text(text, size, overlap):
 
 
 def read_pages(path):
-    """Return [(page_number_or_None, text)]. Markdown and text have no pages."""
+    """Return [(page_number_or_None, text)]. Markdown and text have no pages.
+
+    PDF text arrives with a line break wherever the page wrapped a line. Those breaks are joined into
+    single spaces so a sentence reads as one piece (and a quoted sentence can be found whole). Markdown
+    and text are returned exactly as written."""
     if path.suffix == ".pdf":
-        return [(n, p.extract_text() or "") for n, p in enumerate(PdfReader(path).pages, start=1)]
+        return [(n, re.sub(r"\s*\n\s*", " ", p.extract_text() or "").strip())
+                for n, p in enumerate(PdfReader(path).pages, start=1)]
     return [(None, path.read_text(encoding="utf-8"))]
 
 
@@ -41,7 +47,7 @@ def open_collection(chroma_dir, embedding_function=None):
     )
 
 
-def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None, uploader="cli"):
+def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None, uploader="cli", min_page_chars=20):
     """Chunk every document, store vectors in Chroma and text in SQLite. Unchanged files are skipped.
     `uploader` names who added or changed each document (kept for provenance)."""
     docs_dir = Path(docs_dir)
@@ -49,7 +55,7 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
         raise FileNotFoundError(f"{docs_dir} is not a folder (refusing to treat every document as deleted)")
     conn = db.connect(db_path)
     col = open_collection(chroma_dir, embedding_function)
-    counts = {"added": 0, "skipped": 0, "chunks": 0, "removed": 0}
+    counts = {"added": 0, "skipped": 0, "chunks": 0, "removed": 0, "pages_without_text": []}
     on_disk = set()
     for path in sorted(p for p in docs_dir.rglob("*") if p.suffix in SUFFIXES):
         grp = group_of(path, docs_dir)
@@ -69,7 +75,11 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
         conn.execute("DELETE FROM chunks WHERE doc_id=?", (doc_id,))
         ids, texts, metas = [], [], []
         for page, text in read_pages(path):
+            if page is not None and len(text) < min_page_chars:  # a scanned page has no text layer
+                counts["pages_without_text"].append(f"{doc_id} page {page}")
             for piece in chunk_text(text, size, overlap):
+                if not piece.strip():
+                    continue
                 ids.append(f"{doc_id}#{len(ids):04d}")
                 texts.append(piece)
                 metas.append({"doc_id": doc_id, "group": grp, "page": page or 0})
