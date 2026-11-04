@@ -33,7 +33,9 @@ def test_no_leaks_for_any_question_and_user(store):
         for q in questions:
             hits = retrieve(*store, q, user["groups"], k=5)
             runs += 1
-            leaks += sum(h["group"] not in user["groups"] for h in hits)
+            # Judge by the folder in the document path, not by the stored label, so a mislabelled
+            # chunk would still be caught.
+            leaks += sum(h["doc_id"].split("/")[0] not in user["groups"] for h in hits)
     assert runs == 480
     assert leaks == 0
 
@@ -49,3 +51,12 @@ def test_leak_check_can_detect_a_leak(store):
     q = "What is the total approved budget for 2026?"
     unfiltered = store[0].query(query_texts=[q], n_results=5)["metadatas"][0]
     assert any(m["group"] == "finance" for m in unfiltered)
+
+
+def test_stored_group_label_matches_the_real_folder(store):
+    """Every chunk's group label, in Chroma and in SQLite, equals the folder its file sits in."""
+    col, conn = store
+    for meta in col.get(include=["metadatas"])["metadatas"]:
+        assert meta["group"] == meta["doc_id"].split("/")[0]
+    for doc_id, grp in conn.execute("SELECT doc_id, grp FROM documents"):
+        assert grp == doc_id.split("/")[0]
