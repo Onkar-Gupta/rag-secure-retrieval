@@ -606,9 +606,9 @@ def run_one(job, env):
     cond, delimit, q, user, kind = job
     cfg, timed = env["cfg"], env["timed"]
     groups = env["users"][user]["groups"]
+    before, started = timed.calls, time.perf_counter()  # the timer covers the search AND the model, as the protocol says
     used = context_for(cond, env["col"], env["conn"], q["question"], groups, env["vecs"][q["id"]], cfg)
     rule = B_RULE.format(groups=", ".join(groups)) if cond == "B" else None
-    before, started = timed.calls, time.perf_counter()
     out = generator.answer(q["question"], used, timed, cfg["not_found_response"], delimit, extra_rule=rule)
     total = time.perf_counter() - started
     called = timed.calls > before

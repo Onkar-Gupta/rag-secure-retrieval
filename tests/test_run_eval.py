@@ -309,3 +309,21 @@ def test_a_dev_only_rehearsal_can_be_summarised_and_pass_marks_without_data_are_
     assert v["pass_mark_5_negative_rejection_test_at_least_0.90"] is None
     assert v["pass_mark_1_leakage_under_D_zero_context_and_canary"] is True
     assert s["condition_D"]["dev"]["n"] == 5 and s["condition_D"]["test"]["n"] == 0
+
+
+def test_the_request_timer_includes_the_search_step(store, monkeypatch):
+    """Regression: the first official run timed only the answer step, so requests that never reached the
+    model showed 0 ms. The timer must cover the search too."""
+    import time
+
+    env, questions, _ = gen_env(store, gen_llm)
+    real = run_eval.context_for
+
+    def slow_search(*args, **kwargs):
+        time.sleep(0.05)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(run_eval, "context_for", slow_search)
+    q = next(x for x in questions if x["id"] == "c1")  # a guest asking about finance: the model is never called
+    row = run_eval.run_one(("D", True, q, "guest", "main"), env)
+    assert row["called_model"] is False and row["total_seconds"] >= 0.05
