@@ -16,7 +16,7 @@ def neutralise(text):
     return _RUN.sub(lambda m: " ".join(m.group(0)), text)
 
 
-def build_prompt(question, hits, not_found, delimit=True):
+def build_prompt(question, hits, not_found, delimit=True, extra_rule=None):
     """(system, user) prompt. With delimit=True every chunk sits between DOC and END markers and the
     rules say that text is data, never instructions. The citation rule is repeated after the question
     because small models follow the last instruction best."""
@@ -38,6 +38,8 @@ def build_prompt(question, hits, not_found, delimit=True):
         question = neutralise(question)  # a question must not forge markers either
     else:
         context = "\n".join(f"[{h['chunk_id']}] {h['text']}" for h in hits)
+    if extra_rule:  # used only by the evaluation's prompt-only condition B; the served path never sets it
+        rules += " " + extra_rule
     reminder = "Answer briefly and end each sentence with the source id in square brackets."
     return rules, f"Context:\n{context}\n\nQuestion: {question}\n{reminder}"
 
@@ -57,12 +59,12 @@ def check_citations(answer, allowed_ids):
     return clean, valid, invalid
 
 
-def answer(question, hits, llm, not_found, delimit=True):
+def answer(question, hits, llm, not_found, delimit=True, extra_rule=None):
     """Grounded answer. With nothing retrieved the model is never called."""
     nothing = {"answer": not_found, "sources": [], "invalid_citations": [], "found": False}
     if not hits:
         return nothing
-    system, user = build_prompt(question, hits, not_found, delimit)
+    system, user = build_prompt(question, hits, not_found, delimit, extra_rule)
     raw = llm(system, user).strip()
     # A "not found" reply with citations tacked on is still the fixed reply, with no sources.
     if re.sub(r"\s+", " ", CITATION.sub("", raw)).strip() == not_found:

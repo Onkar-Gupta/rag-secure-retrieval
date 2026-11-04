@@ -16,3 +16,5 @@ P3_Model_Candidates.md
 P3_Hardening_Plan.md
 *.log
 P3_Independent_Questions_Sheet.md
+reports/generation_partial.jsonl
+reports/generation_smoke*.json
