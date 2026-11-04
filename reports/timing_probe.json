@@ -1,0 +1,36 @@
+{
+ "question": "does search time differ for guest with and without other groups' documents",
+ "n_questions": 120,
+ "warmup": 20,
+ "repeats": 200,
+ "resamples": 10000,
+ "seed": 0,
+ "median_ms_full": 2.1328,
+ "median_ms_public_only": 2.076975,
+ "median_difference_ms": 0.05255,
+ "ci95_ms": [
+  0.04875,
+  0.0563
+ ],
+ "rule_interval_includes_zero": false,
+ "same_top5_ids_in_both_indexes": "120 of 120",
+ "meta": {
+  "date": "2026-11-04T23:48:37+05:30",
+  "commit": "90505c533fa9a7f81d363baf7c67f900f5995fed",
+  "working_tree_dirty": false,
+  "python": "3.11.9",
+  "os": "Windows-10-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "cpu_threads": 22,
+  "ram_gb": 15.4,
+  "gpu": "not used (ONNX Runtime on CPU)",
+  "packages": {
+   "chromadb": "1.5.9",
+   "onnxruntime": "1.31.1",
+   "pypdf": "6.21.4",
+   "PyYAML": "6.0.3"
+  },
+  "embedding_model": "chroma default all-MiniLM-L6-v2 (ONNX)",
+  "bootstrap": "10000 resamples, seed 0"
+ }
+}

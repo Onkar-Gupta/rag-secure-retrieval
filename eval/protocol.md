@@ -236,6 +236,8 @@ Dated entries only. Each entry says what changed, why, and whether any result ex
 
 **4 Nov 2026, addendum to the search-time probe (no result existed).** The first run of `scripts/timing_probe.py` timed all 120 questions, then crashed while Windows refused to delete its temporary index folder (a file still held open), before it computed or wrote any statistic. No number was seen. The fix is `ignore_cleanup_errors=True` on the temporary folder; the design, the repeats and the acceptance rule are unchanged. The probe is run again once with the fix, and this entry records that the first attempt produced nothing.
 
+**4 Nov 2026, search-time probe result (one run, commit 90505c5, clean tree; `reports/timing_probe.json`).** The acceptance rule (the interval includes zero) was NOT met. For `guest` and the same 120 questions, the median search took 2.133 ms in the full index and 2.077 ms in the public-only index. The median per-question difference was +0.053 ms, 95% interval +0.049 to +0.056 ms (about 2.5 percent). The top 5 chunk ids were identical in both indexes for 120 of 120 questions. So a timing difference exists and is measurable on this machine with 200 repeats per question, but it is about 0.05 ms, far below the network and model variation of a real request (the answer step takes about 2.5 s). Whether an outside observer could use it was not tested. Consequence under the rule written before the run: it is reported in the README in neutral words, and equalising search time is on the v1.1 list. No setting, pass mark or main result changes.
+
 ## 12. Known biases and limits
 
 - **Self-test.** The same person wrote the documents, the questions, the answer spans and the code. This is not an independent benchmark, and the README says so.
