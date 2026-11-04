@@ -64,6 +64,10 @@ Four designs were compared. **A** no control. **B** prompt-only: the model is to
 | Median time per answer (RTX 4070 Laptop GPU, model fully on GPU) | 2.5 s (90th percentile 2.7 s) | [`generation.json`](reports/generation.json) |
 | PDF check (6 PDFs, 15 pages, 12 questions): forbidden chunks D / control A | 0 of 48 / 16 of 48 | [`pdf_check.json`](reports/pdf_check.json) |
 | PDF check: right page found / cited | 6 of 6 / 6 of 6 | [`pdf_check.json`](reports/pdf_check.json) |
+| Demo sessions and uploads (5 sessions, 530 retrieval runs): forbidden chunks with the filter / no-filter control | 0 of 530 / 342 of 530 | [`upload_check.json`](reports/upload_check.json) |
+| Demo sessions: canary strings from other sessions in 50 attacker answers | 0 | [`upload_check.json`](reports/upload_check.json) |
+| Demo sessions: upload and session refusal cases correct / sessions fully cleaned up after expiry | 23 of 23 / 5 of 5 | [`upload_check.json`](reports/upload_check.json) |
+| Demo sessions: own document in the top 5 / own answers citing it | 48 of 50 / 21 of 25 (the other 4 were the fixed not-found reply) | [`upload_check.json`](reports/upload_check.json) |
 | Search time for `guest`, full index vs public-only index, no padding | 2.133 ms vs 2.077 ms; difference +0.053 ms (95% interval +0.049 to +0.056 ms) | [`timing_probe.json`](reports/timing_probe.json) |
 | Same check with every search padded to 20 ms | Difference 0.0000 ms (95% interval -0.0001 to +0.0001 ms). 2.29% of searches ran past the 20 ms floor (limit was 0.1%), so the check is reported as failed | [`timing_probe_padded_20ms.json`](reports/timing_probe_padded_20ms.json) |
 | Independent question set written by someone other than the code author | TBC | |
@@ -141,6 +145,9 @@ All settings live in `config.yaml`. The retrieval and answering values below wer
 | `api_key_header` | Header that carries the key | `X-API-Key` |
 | `admin_users` | Users who may call `POST /ingest` | `[admin]` |
 | `log_question_text` | `false` keeps only a hash of each question in the log | `false` |
+| `demo_mode` | Lets visitors open a private session and upload files into it | `false` |
+| `demo_max_file_mb` / `demo_max_files` | Largest file and most files per session | `5` / `3` |
+| `demo_max_sessions` / `demo_ttl_seconds` | Sessions at once, and how long a session and its files live | `20` / `3600` |
 
 ## Use your own data
 
@@ -152,6 +159,10 @@ All settings live in `config.yaml`. The retrieval and answering values below wer
 
 The demo keys (`demo-key-guest`, `demo-key-eng`, `demo-key-fin`, `demo-key-admin`) are public on purpose. Do not use them for real data.
 
+## Demo mode
+
+Set `demo_mode: true` in `config.yaml` to let a visitor try the system with their own file. `POST /session` gives a private group and a key. `POST /upload` adds a PDF, Markdown or text file to that group only. The visitor can then ask about their own file and the public documents, and nothing else: another visitor's files, `engineering` and `finance` stay out of the search. A session and its files are deleted after `demo_ttl_seconds`, when the server stops, and at the next start if it crashed. This is for a local demo; the upload checks are in the results table above.
+
 ## API reference
 
 Send the key in the `X-API-Key` header.
@@ -161,8 +172,10 @@ Send the key in the `X-API-Key` header.
 | `GET /health` | anyone | none | `{"status": "ok"}` |
 | `POST /ask` | any valid key | `{"question": "...", "explain": false}` | `answer`, `sources`, `found`, `provenance` (document, page, group, uploader, date), and `explanation` if `explain` is true |
 | `POST /ingest` | users in `admin_users` | none | counts of documents added, skipped and removed, and chunks written |
+| `POST /session` | anyone, only if `demo_mode` is on | none | `key`, `group`, `groups`, `expires_in_seconds`, limits |
+| `POST /upload` | a demo session key | raw file bytes, file name in the `X-Filename` header | `file`, `chunks`, `pages_without_text`, `files_used` |
 
-Errors: `401` missing or wrong key (same reply for both), `403` not an admin, `422` empty or over-long question, `503` the language model is not reachable.
+Errors: `401` missing, wrong or expired key (same reply for all), `403` not an admin (or not a demo session, for `/upload`), `422` empty or over-long question or an unreadable file, `503` the language model is not reachable or the demo is full. Uploads also return `400` for a bad file name or empty file, `409` for a fourth file or a repeated name, `413` for a file over the size limit and `415` for a type other than PDF, Markdown or text.
 
 ```bash
 curl -X POST http://127.0.0.1:8000/ask \
@@ -178,6 +191,7 @@ TBC
 
 - **Self-test.** The same person wrote the documents, the questions and the code. This is not an independent benchmark. The independent set is TBC.
 - **Small sets.** 4 injection cases, 4 poison cases, 6 PDF questions. Treat those results as indications.
+- **Demo mode.** Open uploads are meant for a local demo at `127.0.0.1`. Exposing them to the internet needs HTTPS, rate limits and abuse protection, which are not part of this repo. The upload check used generated text, five sessions and one machine.
 - **Sign-in.** API keys are a lookup against stored hashes. There is no user management, HTTPS or rate limiting; run the service behind a reverse proxy if you expose it.
 - **Timing.** Searches are padded to a fixed 20 ms, but 2.29% ran longer in the check (see Results), and padding must be raised for a larger index. The model step is not padded. Reply length for "not found" is fixed at 104 bytes.
 - **Hidden instructions in documents** cannot be fully blocked by any prompt technique. Retrieved text is wrapped in markers and marker look-alikes are broken up, but this showed no measured effect on this model.
@@ -202,6 +216,7 @@ TBC
 - [x] Citation checking, fixed not-found reply, `--explain`, provenance
 - [x] PDF support with page citations
 - [x] Hashed API keys and `rag new-key`
+- [x] Demo sessions with private uploads (API; a browser page is next)
 - [ ] Docker image and CI build
 - [ ] Independent question set (TBC)
 - [ ] Several groups per document

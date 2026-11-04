@@ -1,0 +1,781 @@
+{
+ "stage": "upload-check",
+ "rerun_reason": null,
+ "model": "phi4-mini:3.8b",
+ "settings": {
+  "chunk_size": 300,
+  "chunk_overlap": 100,
+  "top_k": 5,
+  "relevance_threshold": 0.6079088449478149
+ },
+ "summary": {
+  "retrieval_runs_per_condition": 530,
+  "forbidden_chunks_in_context_D": {
+   "k": 0,
+   "n": 530,
+   "rate": 0.0,
+   "wilson95": [
+    4.336808689942018e-19,
+    0.007196142076600999
+   ],
+   "rule_of_three_upper95": 0.005660377358490566
+  },
+  "forbidden_chunks_in_context_A_control": {
+   "k": 342,
+   "n": 530,
+   "rate": 0.6452830188679245,
+   "wilson95": [
+    0.6036390385531918,
+    0.684836044692475
+   ]
+  },
+  "attacker_answers": 50,
+  "canary_strings_from_elsewhere_in_answers": 0,
+  "forbidden_sources_in_answers": 0,
+  "refusal_cases": [
+   {
+    "case": "file name '../x.pdf'",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'a/b.pdf'",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name '/abs.pdf'",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'C:x.pdf'",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'a\\\\b.pdf'",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'CON.pdf'",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'nul.txt'",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'run.exe'",
+    "expected": 415,
+    "got": 415,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'page.html'",
+    "expected": 415,
+    "got": 415,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name 'noextension'",
+    "expected": 415,
+    "got": 415,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file name with a null byte (name check called directly)",
+    "expected": 400,
+    "got": 400,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file over the size limit",
+    "expected": 413,
+    "got": 413,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "request that names a group lands in the session's own group",
+    "expected": 200,
+    "got": 200,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file two accepted",
+    "expected": 200,
+    "got": 200,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "file three accepted",
+    "expected": 200,
+    "got": 200,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "fourth file",
+    "expected": 409,
+    "got": 409,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "missing key",
+    "expected": 401,
+    "got": 401,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "wrong key",
+    "expected": 401,
+    "got": 401,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "a real user's key (not a session)",
+    "expected": 403,
+    "got": 403,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "unreadable PDF",
+    "expected": 422,
+    "got": 422,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "21st session",
+    "expected": 503,
+    "got": 503,
+    "ok": true,
+    "written_outside_session": []
+   },
+   {
+    "case": "expired session",
+    "expected": 401,
+    "got": 401,
+    "ok": true,
+    "written_outside_session": []
+   }
+  ],
+  "cleanup": [
+   {
+    "group": "demo-session-6f8b60c9fb5b80b1",
+    "folder_gone": true,
+    "chunks_in_chroma": 0,
+    "rows_in_sqlite": 0
+   },
+   {
+    "group": "demo-session-55895f828baa34b0",
+    "folder_gone": true,
+    "chunks_in_chroma": 0,
+    "rows_in_sqlite": 0
+   },
+   {
+    "group": "demo-session-c99e361a5a23e576",
+    "folder_gone": true,
+    "chunks_in_chroma": 0,
+    "rows_in_sqlite": 0
+   },
+   {
+    "group": "demo-session-0a568f94a017a6be",
+    "folder_gone": true,
+    "chunks_in_chroma": 0,
+    "rows_in_sqlite": 0
+   },
+   {
+    "group": "demo-session-ad07f1068e4d8a81",
+    "folder_gone": true,
+    "chunks_in_chroma": 0,
+    "rows_in_sqlite": 0
+   }
+  ],
+  "own_document_in_top5_for_own_topic_questions": {
+   "k": 48,
+   "n": 50,
+   "rate": 0.96,
+   "wilson95": [
+    0.8653966212204534,
+    0.9889613473391734
+   ]
+  },
+  "own_answers_citing_own_document": {
+   "k": 21,
+   "n": 25,
+   "rate": 0.84,
+   "wilson95": [
+    0.6534598601976183,
+    0.9359665239142201
+   ]
+  },
+  "median_seconds_per_answer": 0.41820880002342165,
+  "p90_seconds_per_answer": 3.2801888000103645,
+  "leak_examples_D": [],
+  "verdict": {
+   "pass_mark_1_isolation": true,
+   "pass_mark_2_every_refusal_correct_and_nothing_written_outside": true,
+   "pass_mark_3_cleanup_5_of_5": true,
+   "control_A_leaks_so_the_test_can_see_leaks": true
+  }
+ },
+ "attacker_answers_detail": [
+  {
+   "asker": 1,
+   "id": "s2_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s2_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s3_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s3_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s4_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s4_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s5_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s5_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s1_pull0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 1,
+   "id": "s1_pull1",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s1_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s1_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s3_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s3_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s4_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s4_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s5_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s5_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s2_pull0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s2_pull1",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s1_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s1_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s2_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s2_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s4_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s4_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s5_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s5_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s3_pull0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s3_pull1",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s1_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s1_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s2_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s2_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s3_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s3_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s5_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s5_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s4_pull0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s4_pull1",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s1_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s1_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s2_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s2_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s3_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s3_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s4_canary0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s4_topic0a",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s5_pull0",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s5_pull1",
+   "canary_strings_from_elsewhere": [],
+   "forbidden_sources": [],
+   "answer": "I could not find an answer in the documents you can access."
+  }
+ ],
+ "own_answers_detail": [
+  {
+   "asker": 1,
+   "id": "s1_topic0a",
+   "cited_own_document": true,
+   "answer": "The survey covered 12 tide pools on the north shore during March [demo-session-6f8b60c9fb5b80b1/notes_1.md#0000]."
+  },
+  {
+   "asker": 1,
+   "id": "s1_topic1a",
+   "cited_own_document": true,
+   "answer": "The lowest tide of the week fell at 06:40 on Thursday [demo-session-6f8b60c9fb5b80b1/notes_1.md#0000]."
+  },
+  {
+   "asker": 1,
+   "id": "s1_topic2a",
+   "cited_own_document": true,
+   "answer": "48 hermit crabs were counted in the largest pool [demo-session-6f8b60c9fb5b80b1/notes_1.md#0001]."
+  },
+  {
+   "asker": 1,
+   "id": "s1_topic3a",
+   "cited_own_document": true,
+   "answer": "The average water temperature in the shallow pools was 11 degrees [demo-session-6f8b60c9fb5b80b1/notes_1.md#0001]."
+  },
+  {
+   "asker": 1,
+   "id": "s1_topic4a",
+   "cited_own_document": false,
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 2,
+   "id": "s2_topic0a",
+   "cited_own_document": true,
+   "answer": "The apiary has 7 hives [demo-session-55895f828baa34b0/notes_2.md#0000]."
+  },
+  {
+   "asker": 2,
+   "id": "s2_topic1a",
+   "cited_own_document": true,
+   "answer": "The first honey harvest is expected in the third week of July [demo-session-55895f828baa34b0/notes_2.md#0000]."
+  },
+  {
+   "asker": 2,
+   "id": "s2_topic2a",
+   "cited_own_document": true,
+   "answer": "Each hive is inspected every 9 days in summer [demo-session-55895f828baa34b0/notes_2.md#0000]."
+  },
+  {
+   "asker": 2,
+   "id": "s2_topic3a",
+   "cited_own_document": true,
+   "answer": "The queen in hive 3 was replaced in April [demo-session-55895f828baa34b0/notes_2.md#0001]."
+  },
+  {
+   "asker": 2,
+   "id": "s2_topic4a",
+   "cited_own_document": true,
+   "answer": "The apiary produced 62 kilograms of honey last year [demo-session-55895f828baa34b0/notes_2.md#0001]."
+  },
+  {
+   "asker": 3,
+   "id": "s3_topic0a",
+   "cited_own_document": true,
+   "answer": "The chain should be replaced after about 3,000 kilometres [demo-session-c99e361a5a23e576/notes_3.md#0000]."
+  },
+  {
+   "asker": 3,
+   "id": "s3_topic1a",
+   "cited_own_document": true,
+   "answer": "The tyre pressure for the commuter bike is 65 psi [demo-session-c99e361a5a23e576/notes_3.md#0000]."
+  },
+  {
+   "asker": 3,
+   "id": "s3_topic2a",
+   "cited_own_document": false,
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 3,
+   "id": "s3_topic3a",
+   "cited_own_document": true,
+   "answer": "The service takes about 90 minutes in the garage [demo-session-c99e361a5a23e576/notes_3.md#0001]."
+  },
+  {
+   "asker": 3,
+   "id": "s3_topic4a",
+   "cited_own_document": true,
+   "answer": "The rear derailleur has 9 gears [demo-session-c99e361a5a23e576/notes_3.md#0001]."
+  },
+  {
+   "asker": 4,
+   "id": "s4_topic0a",
+   "cited_own_document": true,
+   "answer": "The starter is fed every 12 hours [demo-session-0a568f94a017a6be/notes_4.md#0000]."
+  },
+  {
+   "asker": 4,
+   "id": "s4_topic1a",
+   "cited_own_document": false,
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 4,
+   "id": "s4_topic2a",
+   "cited_own_document": true,
+   "answer": "The standard loaf uses 450 grams of flour [demo-session-0a568f94a017a6be/notes_4.md#0000]."
+  },
+  {
+   "asker": 4,
+   "id": "s4_topic3a",
+   "cited_own_document": true,
+   "answer": "The dough rests for 4 hours before shaping [demo-session-0a568f94a017a6be/notes_4.md#0000]."
+  },
+  {
+   "asker": 4,
+   "id": "s4_topic4a",
+   "cited_own_document": true,
+   "answer": "The oven is preheated to 230 degrees [demo-session-0a568f94a017a6be/notes_4.md#0001]."
+  },
+  {
+   "asker": 5,
+   "id": "s5_topic0a",
+   "cited_own_document": true,
+   "answer": "The allotment has 6 raised beds [demo-session-ad07f1068e4d8a81/notes_5.md#0000]."
+  },
+  {
+   "asker": 5,
+   "id": "s5_topic1a",
+   "cited_own_document": true,
+   "answer": "The potatoes go into bed 2 [demo-session-ad07f1068e4d8a81/notes_5.md#0000]."
+  },
+  {
+   "asker": 5,
+   "id": "s5_topic2a",
+   "cited_own_document": false,
+   "answer": "I could not find an answer in the documents you can access."
+  },
+  {
+   "asker": 5,
+   "id": "s5_topic3a",
+   "cited_own_document": true,
+   "answer": "Runner beans are sown after the last frost, usually in May [demo-session-ad07f1068e4d8a81/notes_5.md#0000]."
+  },
+  {
+   "asker": 5,
+   "id": "s5_topic4a",
+   "cited_own_document": true,
+   "answer": "The compost heap is turned every 3 weeks [demo-session-ad07f1068e4d8a81/notes_5.md#0001]."
+  }
+ ],
+ "meta": {
+  "date": "2026-11-05T00:44:27+05:30",
+  "commit": "10e9efb0b54a19a49c5855db68219605efdf9000",
+  "working_tree_dirty": false,
+  "python": "3.11.9",
+  "os": "Windows-10-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "cpu_threads": 22,
+  "ram_gb": 15.4,
+  "gpu": "not used (ONNX Runtime on CPU)",
+  "packages": {
+   "chromadb": "1.5.9",
+   "onnxruntime": "1.31.1",
+   "pypdf": "6.21.4",
+   "PyYAML": "6.0.3"
+  },
+  "embedding_model": "chroma default all-MiniLM-L6-v2 (ONNX)",
+  "bootstrap": "10000 resamples, seed 0"
+ }
+}
