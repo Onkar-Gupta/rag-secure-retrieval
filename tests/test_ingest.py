@@ -4,7 +4,7 @@ import pytest
 from chromadb import Documents, EmbeddingFunction, Embeddings
 from pdfmaker import make_pdf
 
-from rag_secure.ingest import chunk_text, group_of, ingest
+from rag_secure.ingest import chunk_text, group_of, ingest, open_collection
 
 
 class FakeEmbedder(EmbeddingFunction):
@@ -53,7 +53,7 @@ def test_ingest_stores_group_and_is_idempotent(tmp_path):
     (docs / "finance" / "a.md").write_text("x" * 25, encoding="utf-8")
     first = run(tmp_path, docs)
     assert first["added"] == 1 and first["chunks"] == 4  # starts at 0, 7, 14, 21
-    assert run(tmp_path, docs) == {"added": 0, "skipped": 1, "chunks": 0}
+    assert run(tmp_path, docs) == {"added": 0, "skipped": 1, "chunks": 0, "removed": 0}
     (docs / "finance" / "a.md").write_text("y" * 8, encoding="utf-8")
     assert run(tmp_path, docs)["chunks"] == 1  # old chunks replaced, not added to
     conn = sqlite3.connect(tmp_path / "t.sqlite")
@@ -78,3 +78,40 @@ def test_pdf_pages_are_kept(tmp_path):
     rows = conn.execute("SELECT page, text FROM chunks ORDER BY chunk_id").fetchall()
     assert {r[0] for r in rows} == {1, 2}
     assert "page one" in "".join(t for p, t in rows if p == 1)
+
+
+def test_deleted_file_is_removed_from_both_stores(tmp_path):
+    docs = tmp_path / "docs"
+    (docs / "finance").mkdir(parents=True)
+    (docs / "finance" / "secret.md").write_text("x" * 25, encoding="utf-8")
+    (docs / "finance" / "keep.md").write_text("y" * 25, encoding="utf-8")
+    run(tmp_path, docs)
+    (docs / "finance" / "secret.md").unlink()
+    assert run(tmp_path, docs)["removed"] == 1
+    conn = sqlite3.connect(tmp_path / "t.sqlite")
+    assert conn.execute("SELECT doc_id FROM documents").fetchall() == [("finance/keep.md",)]
+    assert {d for (d,) in conn.execute("SELECT doc_id FROM chunks")} == {"finance/keep.md"}
+    meta = open_collection(tmp_path / "chroma", FakeEmbedder()).get(include=["metadatas"])["metadatas"]
+    assert {m["doc_id"] for m in meta} == {"finance/keep.md"}
+
+
+def test_moved_file_is_searchable_only_under_its_new_group(tmp_path):
+    docs = tmp_path / "docs"
+    (docs / "public").mkdir(parents=True)
+    (docs / "finance").mkdir()
+    (docs / "public" / "plan.md").write_text("z" * 25, encoding="utf-8")
+    run(tmp_path, docs)
+    (docs / "public" / "plan.md").rename(docs / "finance" / "plan.md")
+    run(tmp_path, docs)
+    meta = open_collection(tmp_path / "chroma", FakeEmbedder()).get(include=["metadatas"])["metadatas"]
+    assert {(m["doc_id"], m["group"]) for m in meta} == {("finance/plan.md", "finance")}
+
+
+def test_missing_docs_folder_does_not_wipe_the_index(tmp_path):
+    docs = tmp_path / "docs"
+    (docs / "public").mkdir(parents=True)
+    (docs / "public" / "a.md").write_text("x" * 25, encoding="utf-8")
+    run(tmp_path, docs)
+    with pytest.raises(FileNotFoundError):
+        run(tmp_path, tmp_path / "typo")
+    assert sqlite3.connect(tmp_path / "t.sqlite").execute("SELECT COUNT(*) FROM chunks").fetchone()[0] > 0

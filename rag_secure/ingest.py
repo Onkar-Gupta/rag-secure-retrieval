@@ -43,11 +43,15 @@ def open_collection(chroma_dir, embedding_function=None):
 def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None):
     """Chunk every document, store vectors in Chroma and text in SQLite. Unchanged files are skipped."""
     docs_dir = Path(docs_dir)
+    if not docs_dir.is_dir():
+        raise FileNotFoundError(f"{docs_dir} is not a folder (refusing to treat every document as deleted)")
     conn = db.connect(db_path)
     col = open_collection(chroma_dir, embedding_function)
-    counts = {"added": 0, "skipped": 0, "chunks": 0}
+    counts = {"added": 0, "skipped": 0, "chunks": 0, "removed": 0}
+    on_disk = set()
     for path in sorted(p for p in docs_dir.rglob("*") if p.suffix in SUFFIXES):
         grp = group_of(path, docs_dir)
+        on_disk.add(path.relative_to(docs_dir).as_posix())
         doc_id = path.relative_to(docs_dir).as_posix()
         sha = hashlib.sha256(path.read_bytes()).hexdigest()
         row = conn.execute("SELECT sha256 FROM documents WHERE doc_id=?", (doc_id,)).fetchone()
@@ -72,4 +76,12 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
         conn.commit()
         counts["added"] += 1
         counts["chunks"] += len(ids)
+    # A document whose file is gone (deleted, or moved to another folder) must stop being searchable.
+    for (doc_id,) in conn.execute("SELECT doc_id FROM documents").fetchall():
+        if doc_id not in on_disk:
+            col.delete(where={"doc_id": doc_id})
+            conn.execute("DELETE FROM chunks WHERE doc_id=?", (doc_id,))
+            conn.execute("DELETE FROM documents WHERE doc_id=?", (doc_id,))
+            counts["removed"] += 1
+    conn.commit()
     return counts

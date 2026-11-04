@@ -18,4 +18,7 @@ def main(argv=None):
         counts = ingest.ingest(
             cfg["docs_dir"], cfg["chroma_dir"], cfg["db_path"], cfg["chunk_size"], cfg["chunk_overlap"]
         )
-        print(f"documents added {counts['added']}, skipped {counts['skipped']}, chunks written {counts['chunks']}")
+        print(
+            f"documents added {counts['added']}, skipped {counts['skipped']}, "
+            f"removed {counts['removed']}, chunks written {counts['chunks']}"
+        )
