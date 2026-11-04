@@ -53,7 +53,8 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
         grp = group_of(path, docs_dir)
         on_disk.add(path.relative_to(docs_dir).as_posix())
         doc_id = path.relative_to(docs_dir).as_posix()
-        sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        # The stored fingerprint covers the chunk settings too, so changing them re-chunks every file.
+        sha = f"{hashlib.sha256(path.read_bytes()).hexdigest()}:{size}:{overlap}"
         row = conn.execute("SELECT sha256 FROM documents WHERE doc_id=?", (doc_id,)).fetchone()
         if row and row[0] == sha:
             counts["skipped"] += 1

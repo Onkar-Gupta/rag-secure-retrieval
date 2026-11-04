@@ -115,3 +115,14 @@ def test_missing_docs_folder_does_not_wipe_the_index(tmp_path):
     with pytest.raises(FileNotFoundError):
         run(tmp_path, tmp_path / "typo")
     assert sqlite3.connect(tmp_path / "t.sqlite").execute("SELECT COUNT(*) FROM chunks").fetchone()[0] > 0
+
+
+def test_changing_chunk_settings_rebuilds_the_index(tmp_path):
+    docs = tmp_path / "docs"
+    (docs / "public").mkdir(parents=True)
+    (docs / "public" / "a.md").write_text("x" * 40, encoding="utf-8")
+    assert ingest(docs, tmp_path / "chroma", tmp_path / "t.sqlite", 10, 3, FakeEmbedder())["chunks"] == 6
+    again = ingest(docs, tmp_path / "chroma", tmp_path / "t.sqlite", 20, 5, FakeEmbedder())
+    assert again["added"] == 1 and again["chunks"] == 3  # starts at 0, 15, 30
+    conn = sqlite3.connect(tmp_path / "t.sqlite")
+    assert conn.execute("SELECT COUNT(*) FROM chunks").fetchone() == (3,)
