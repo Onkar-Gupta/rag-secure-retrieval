@@ -1,6 +1,6 @@
 {
  "stage": "number-check",
- "checker_version": 2,
+ "checker_version": 3,
  "acceptance_fixed_before_run": {
   "true_sentences_wrongly_flagged_max": 0.05,
   "wrong_number_caught_min": 0.95,
@@ -72,18 +72,14 @@
   "failures": []
  },
  "other_number_in_chunk_caught": {
-  "k": 143,
+  "k": 177,
   "n": 201,
-  "rate": 0.7114427860696517,
+  "rate": 0.8805970149253731,
   "wilson95": [
-   0.645302069003135,
-   0.7696527058082314
+   0.8284831505893563,
+   0.9184354440711032
   ],
   "failures": [
-   {
-    "question": "q006",
-    "sentence": "Unused leave can be carried into the next year, up to a limit of 12 days, and any excess is lost on 31 March."
-   },
    {
     "question": "q013",
     "sentence": "The Starter plan costs 649 euros per month and includes up to 25 vehicles."
@@ -101,49 +97,40 @@
     "sentence": "Employees are expected in the office on at least 20 days per week, usually Tuesday and Thursday."
    },
    {
-    "question": "q016",
-    "sentence": "Staff may work from another country for up to 25 days per year with written approval from their manager."
-   },
-   {
-    "question": "q018",
-    "sentence": "Suspicious emails should be forwarded to the phishing mailbox, and the IT team replies within 1 hours."
-   },
-   {
-    "question": "q020",
-    "sentence": "The first response target for a standard ticket is 30 working hours."
-   },
-   {
-    "question": "q021",
-    "sentence": "The default limit is 100 requests per minute for each API key."
-   },
-   {
     "question": "q022",
-    "sentence": "Bursts of up to 600 requests in one second are allowed before throttling begins."
+    "sentence": "Bursts of up to 6000 requests in one second are allowed before throttling begins."
+   },
+   {
+    "question": "q043",
+    "sentence": "The total approved operating budget for 2026 is 7.2 million euros."
+   },
+   {
+    "question": "q043",
+    "sentence": "The total approved operating budget for 7.2 is 18.4 million euros."
+   },
+   {
+    "question": "q044",
+    "sentence": "Engineering receives the largest share, 7.2 million euros, which is 1.1 percent of the total."
+   },
+   {
+    "question": "q044",
+    "sentence": "Engineering receives the largest share, 7.2 million euros, which is 2025 percent of the total."
+   },
+   {
+    "question": "q044",
+    "sentence": "Engineering receives the largest share, 1.1 million euros, which is 39 percent of the total."
    }
   ]
  },
  "spelled_out_supported": {
   "k": 40,
-  "n": 43,
-  "rate": 0.9302325581395349,
+  "n": 40,
+  "rate": 1.0,
   "wilson95": [
-   0.8139073144696507,
-   0.9759888462080375
+   0.9123754607496077,
+   1.0
   ],
-  "failures": [
-   {
-    "question": "q047",
-    "sentence": "Salaries are paid on the twenty-sixth of each month, or on the previous working day if the 26th is a weekend."
-   },
-   {
-    "question": "q048",
-    "sentence": "Changes to bank details must reach the payroll team by the fifteenth to take effect in that month."
-   },
-   {
-    "question": "q056",
-    "sentence": "VAT returns are filed quarterly, by the twenty-fiveth of the month after each quarter ends."
-   }
-  ]
+  "failures": []
  },
  "word_overlap": {
   "matched_median": 1.0,
@@ -152,8 +139,8 @@
   "mismatched_n": 60
  },
  "meta": {
-  "date": "2026-11-04T18:26:19+05:30",
-  "commit": "cf82693f00f58a46f2f02b15c9c04bc65abc76a0",
+  "date": "2026-11-04T18:30:05+05:30",
+  "commit": "f5aac12b0d282bc144041d7a113d3979a893254a",
   "working_tree_dirty": false,
   "python": "3.11.9",
   "os": "Windows-10-10.0.26200-SP0",
@@ -173,8 +160,8 @@
  "verdict": {
   "true_sentences_wrongly_flagged": true,
   "wrong_number_caught": true,
-  "other_number_in_chunk_caught": false,
-  "spelled_out_supported": false,
+  "other_number_in_chunk_caught": true,
+  "spelled_out_supported": true,
   "word_overlap_matched": true,
   "word_overlap_mismatched": true
  }
