@@ -178,6 +178,8 @@ Dated entries only. Each entry says what changed, why, and whether any result ex
 
 **4 Nov 2026 (no result existed).** `data/docs/LICENSE-DATA.txt` moved to `data/LICENSE-DATA.txt`. Ingestion rejects any file directly inside `data/docs/` because it has no group, so a licence file cannot live there. No document, question, canary or pass mark changed. Section 3 still names the old path.
 
+**4 Nov 2026, frozen settings (no test-split result existed).** Chosen by the section 9 rule on the dev split only (`reports/tuning_dev.json`, run twice with identical numbers): chunk size 300, overlap 100, top_k 5, relevance threshold 0.6079088449478149 (cosine distance). Dev hit rate@5 under D was 0.95 for four settings (300/0, 300/100, 500/0, 500/100); the tie-break picked 300/100 on balanced accuracy (0.800). Limits of this choice: dev has only 20 answerable and 5 negative questions, so one question moves the hit rate by 0.05 and the threshold rests on 5 negatives. The test split is run once with these settings.
+
 ## 12. Known biases and limits
 
 - **Self-test.** The same person wrote the documents, the questions, the answer spans and the code. This is not an independent benchmark, and the README says so.

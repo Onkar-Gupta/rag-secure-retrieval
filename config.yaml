@@ -3,10 +3,10 @@ docs_dir: data/docs
 chroma_dir: chroma
 db_path: rag.sqlite
 
-# Chunking. PROVISIONAL: chosen on the dev split in step 4, then frozen.
-chunk_size: 500
+# Chunking. FROZEN 4 Nov 2026 from the dev split (reports/tuning_dev.json). See protocol Amendments.
+chunk_size: 300
 chunk_overlap: 100
 
-# Retrieval. top_k is fixed by the protocol; the threshold is chosen on the dev split in step 4.
+# Retrieval. top_k is fixed by the protocol; the threshold was chosen on the dev split and is FROZEN.
 top_k: 5
-relevance_threshold: TBC
+relevance_threshold: 0.6079088449478149
