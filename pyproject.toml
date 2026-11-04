@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rag-secure-retrieval"
+dynamic = ["version"]
+description = "Local RAG with per-document access groups and a measured leakage test."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Onkar Gupta" }]
+keywords = ["rag", "retrieval-augmented-generation", "llm-security"]
+dependencies = ["PyYAML==6.*"]
+
+[project.optional-dependencies]
+dev = ["pytest==9.*", "ruff==0.*"]
+
+[project.scripts]
+rag = "rag_secure.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "rag_secure.__version__" }
+
+[tool.setuptools]
+packages = ["rag_secure"]

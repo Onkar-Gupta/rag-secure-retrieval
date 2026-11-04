@@ -1,0 +1,5 @@
+# Values are filled in as each step is built.
+chunk_size: TBC
+chunk_overlap: TBC
+top_k: TBC
+relevance_threshold: TBC

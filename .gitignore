@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+.env
+chroma/
+*.sqlite
+models/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+# vault planning notes, not part of the repo
+P3_RAG_Secure_Retrieval.md
+P3_Papers_and_Sources.md
+P3_Build_Plan.md
