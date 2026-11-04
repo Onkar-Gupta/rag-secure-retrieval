@@ -10,3 +10,11 @@ chunk_overlap: 100
 # Retrieval. top_k is fixed by the protocol; the threshold was chosen on the dev split and is FROZEN.
 top_k: 5
 relevance_threshold: 0.6079088449478149
+
+# Answering. The model is chosen on the dev split in step 5 (rule in the protocol, section 10).
+not_found_response: "I could not find an answer in the documents you can access."
+ollama_url: http://localhost:11434
+model: TBC
+temperature: 0
+seed: 0
+max_tokens: 300
