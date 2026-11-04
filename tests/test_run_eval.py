@@ -164,3 +164,22 @@ def test_side_channel_report_compares_types_and_checks_the_fixed_reply_size():
     only_search = report["search_only_seconds_cross_minus_negative"]
     assert only_search["ci95"][0] <= 0 <= only_search["ci95"][1]
     assert report["negative"]["body_bytes"]["max"] == 130
+
+
+def test_selftest_helpers():
+    assert [run_eval.digits_to_words(n) for n in (0, 7, 12, 20, 27, 99)] == [
+        "zero", "seven", "twelve", "twenty", "twenty-seven", "ninety-nine"]
+    assert run_eval.replace_number("Pay 40,000 euros by 15", "40000", "99") == "Pay 99 euros by 15"
+    assert run_eval.replace_number("Pay 40,000 euros", "7", "9") is None
+    assert run_eval.wrong_number_for("27", {"27"}) == "88"
+    assert run_eval.wrong_number_for("27", {"88", "38"}) == "9173"
+    assert run_eval.wrong_number_for("10:00", set()) == "23:47"
+    assert run_eval.wrong_number_for("4.6", set()) == "4.67"
+    for n in range(2, 100):  # the words must be read back to the same number by the checker's tokeniser
+        assert generator_tokens(run_eval.digits_to_words(n)) == {str(n)}
+
+
+def generator_tokens(text):
+    from rag_secure import generator
+
+    return generator.numbers_in(text)

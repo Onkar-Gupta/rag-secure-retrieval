@@ -197,8 +197,40 @@ def test_each_cited_sentence_is_judged_on_its_own():
     hits = [chunk("a#0", "Rate is 600 per minute."), chunk("b#0", "Window is 5 minutes.")]
     out = generator.number_support("Rate is 600 [a#0]. Window is 7 minutes [b#0].", hits)
     assert [s["status"] for s in out["segments"]] == ["supported", "unsupported"]
+def test_spelled_out_numbers_are_read_on_both_sides():
+    assert generator.numbers_in("six weeks, twenty-seven days, one hundred items, forty five minutes") == {
+        "6", "27", "100", "45"}
+    same = generator.number_support("Six weeks notice [a#0].", [chunk("a#0", "At least 6 weeks notice is needed.")])
+    assert same["counts"]["supported"] == 1
+    wrong = generator.number_support("Seven weeks notice [a#0].", [chunk("a#0", "Six weeks notice is needed.")])
+    assert wrong["counts"]["unsupported"] == 1 and wrong["segments"][0]["missing"] == ["7"]
 
 
-def test_number_words_are_a_known_limit_not_a_silent_pass():
-    out = generator.number_support("Six weeks notice [a#0].", [chunk("a#0", "Six weeks notice is needed.")])
-    assert out["counts"]["no_numbers"] == 1  # 'six' is not read as a number; documented limit
+def test_the_word_one_alone_is_not_treated_as_a_number():
+    assert generator.numbers_in("No one knew; one of them left") == set()
+    assert generator.numbers_in("one hundred and twenty-one") == {"100", "21"}
+
+
+def test_a_number_that_only_appears_in_another_context_does_not_count():
+    chunk_text = "The audit raised 2 findings in 2025. Leave is 27 days per year."
+    # 2025 is in the chunk, but about the audit, not about the leave
+    wrong = generator.number_support("Leave is 2025 days per year [a#0].", [chunk("a#0", chunk_text)])
+    assert wrong["counts"]["unsupported"] == 1
+    assert wrong["segments"][0]["present_but_about_something_else"] == ["2025"]
+    right = generator.number_support("Leave is 27 days per year [a#0].", [chunk("a#0", chunk_text)])
+    assert right["counts"]["supported"] == 1
+
+
+def test_a_bare_number_with_no_context_words_only_needs_to_be_present():
+    out = generator.number_support("27 [a#0]", [chunk("a#0", "Leave is 27 days.")])
+    assert out["counts"]["supported"] == 1
+
+
+def test_word_overlap_is_high_for_matching_text_and_low_for_unrelated_text():
+    hits = [chunk("a#0", "Employees receive paid annual leave each calendar year."),
+            chunk("b#0", "Servers restart nightly after the backup completes.")]
+    close = generator.number_support("Employees receive paid annual leave [a#0].", hits)["segments"][0]["word_overlap"]
+    far = generator.number_support("Employees receive paid annual leave [b#0].", hits)["segments"][0]["word_overlap"]
+    assert close == 1.0 and far == 0.0
+    assert generator.number_support("Yes [a#0].", hits)["segments"][0]["word_overlap"] is None  # too short to judge
+    assert generator.number_support("Version", hits)["version"] == generator.NUMBER_CHECK_VERSION

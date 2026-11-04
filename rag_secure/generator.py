@@ -123,24 +123,110 @@ def ollama_llm(model, url="http://localhost:11434", temperature=0, seed=0, max_t
     return call
 
 
-_NUMBER = re.compile(r"\d+(?:[.,:]\d+)*")
+# ---- report-only support checks (version 2) -------------------------------------------------------
+# Not used in the served answer. They measure how well an answer sticks to the chunks it cites.
+
+NUMBER_CHECK_VERSION = 2
+_TOKEN = re.compile(r"\d+(?:[.,:]\d+)*|[a-z]+|[.!?;\n]")
 _CITED_SEGMENT = re.compile(r"([^\[\]]*)\[([^\[\]\n]+)\]")
+_UNITS = {w: i for i, w in enumerate(
+    ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"])}
+_TENS = {w: 10 * i for i, w in enumerate(["x", "x", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]) if w != "x"}
+_STOP = {"the", "a", "an", "of", "to", "in", "on", "at", "for", "and", "or", "is", "are", "was", "were", "be", "by", "with", "that", "this", "it", "as", "from", "than", "out", "has", "have", "had", "not", "no", "can", "will", "must", "may", "all", "any", "if", "its", "their", "our", "your", "you", "we", "they", "he", "she"}
+_WINDOW = 2  # content words on each side of a number that count as its context
+
+
+def _number_word(raw, i):
+    """(value, next index) if raw[i] starts a spelled-out number, else (None, i). 'one' alone is skipped:
+    it is far more often a pronoun than a number."""
+    w = raw[i]
+    nxt = raw[i + 1] if i + 1 < len(raw) else ""
+    if w in _TENS:
+        if nxt in _UNITS and 1 <= _UNITS[nxt] <= 9:
+            return _TENS[w] + _UNITS[nxt], i + 2
+        return _TENS[w], i + 1
+    if w in _UNITS:
+        if nxt in ("hundred", "thousand"):
+            return _UNITS[w] * (100 if nxt == "hundred" else 1000), i + 2
+        return (None, i) if w == "one" else (_UNITS[w], i + 1)
+    if w in ("hundred", "thousand"):
+        return (100 if w == "hundred" else 1000), i + 1
+    return None, i
+
+
+def tokenise(text):
+    """[(kind, value)] with kind 'num' or 'word'. Digits and spelled-out numbers both become 'num'
+    ('27', '10:00', '40,000' -> '40000', 'twenty-seven' -> '27')."""
+    raw = _TOKEN.findall(text.lower())
+    out, i = [], 0
+    while i < len(raw):
+        if raw[i] in (".", "!", "?", ";", "\n"):
+            out.append(("break", "."))  # sentence end: a number's context stops here
+            i += 1
+            continue
+        if raw[i][0].isdigit():
+            out.append(("num", raw[i].replace(",", "")))
+            i += 1
+            continue
+        value, j = _number_word(raw, i)
+        if value is None:
+            out.append(("word", raw[i]))
+            i += 1
+        else:
+            out.append(("num", str(value)))
+            i = j
+    return out
 
 
 def numbers_in(text):
-    """The set of numbers in a text: digits with optional . , : parts. Thousands commas are removed."""
-    return {n.replace(",", "") for n in _NUMBER.findall(text)}
+    return {v for kind, v in tokenise(text) if kind == "num"}
+
+
+def _contexts(tokens):
+    """{number: [set of neighbouring content words for each occurrence]}.
+
+    From each number, walk outwards on both sides collecting up to _WINDOW content words. Other numbers
+    and filler words are skipped, and the walk stops at a sentence break or after 8 tokens."""
+    found = {}
+    for k, (kind, value) in enumerate(tokens):
+        if kind != "num":
+            continue
+        near = set()
+        for step in (-1, 1):
+            taken, i = 0, k + step
+            while 0 <= i < len(tokens) and abs(i - k) <= 8 and taken < _WINDOW:
+                t, w = tokens[i]
+                if t == "break":
+                    break
+                if t == "word" and w not in _STOP:
+                    near.add(_stem(w))
+                    taken += 1
+                i += step
+        found.setdefault(value, []).append(near)
+    return found
+
+
+def _stem(word):
+    return word.rstrip("s")[:5]
+
+
+def _content_words(tokens):
+    return {_stem(w) for kind, w in tokens if kind == "word" and w not in _STOP and len(w) > 2}
 
 
 def number_support(answer, hits):
-    """Report-only check: does every number in a sentence appear in a chunk that sentence cites?
+    """Report-only check on a cleaned answer with [id] citations.
 
-    The answer is split into segments, each ending at a [ids] citation (text after the last
-    citation is an uncited segment). A segment with no numbers is 'no_numbers'. Otherwise it is
-    'supported' when every number appears in at least one cited chunk, else 'unsupported'. This
-    catches a wrong or invented figure. It does not check meaning, and it does not understand
-    number words ('six' versus '6'), so it is a measurement, not enforcement."""
-    by_id = {h["chunk_id"]: numbers_in(h["text"]) for h in hits}
+    The answer is split into segments, each ending at a citation (text after the last citation is an
+    uncited segment). A segment with no numbers is 'no_numbers'. Otherwise a number counts as supported
+    only if a cited chunk contains the same number AND shares at least one neighbouring content word
+    with it (so a year or a stray digit elsewhere in the chunk does not count). A segment is
+    'supported' when all its numbers are, else 'unsupported'. Each segment also gets `word_overlap`:
+    the share of its content words that appear in the cited chunks (a crude check of meaning, with no
+    pass mark). Spelled-out numbers are read ('six', 'twenty-seven'). This catches a wrong or invented
+    figure; it cannot tell that a sentence is false in words."""
+    chunk_tokens = {h["chunk_id"]: tokenise(h["text"]) for h in hits}
+    chunk_ctx = {cid: _contexts(t) for cid, t in chunk_tokens.items()}
     segments, end = [], 0
     for m in _CITED_SEGMENT.finditer(answer):
         ids = [re.sub(r"^DOC\s+", "", p.strip()) for p in m.group(2).split(",") if p.strip()]
@@ -150,11 +236,23 @@ def number_support(answer, hits):
         segments.append((answer[end:], []))
     out, counts = [], {"supported": 0, "unsupported": 0, "no_numbers": 0}
     for text, ids in segments:
-        nums = numbers_in(text)
-        have = set().union(*(by_id.get(i, set()) for i in ids)) if ids else set()
-        missing = sorted(nums - have)
-        status = "no_numbers" if not nums else ("unsupported" if missing else "supported")
+        tokens = tokenise(text)
+        asked = _contexts(tokens)
+        missing, elsewhere = [], []
+        for number, contexts in asked.items():
+            cited = [chunk_ctx[i][number] for i in ids if i in chunk_ctx and number in chunk_ctx[i]]
+            found = [c for per_chunk in cited for c in per_chunk]
+            ok = any((not a) or (a & c) for a in contexts for c in found)  # no context words: presence suffices
+            if not ok:
+                missing.append(number)
+                if found:
+                    elsewhere.append(number)  # the number is in a cited chunk, but about something else
+        status = "no_numbers" if not asked else ("unsupported" if missing else "supported")
         counts[status] += 1
-        out.append({"text": text.strip(" .,;:"), "ids": ids, "numbers": sorted(nums), "status": status,
-                    "missing": missing})
-    return {"segments": out, "counts": counts}
+        words = _content_words(tokens)
+        cited_words = set().union(*(_content_words(chunk_tokens[i]) for i in ids if i in chunk_tokens)) if ids else set()
+        overlap = round(len(words & cited_words) / len(words), 3) if len(words) >= 2 else None
+        out.append({"text": text.strip(" .,;:"), "ids": ids, "numbers": sorted(asked), "status": status,
+                    "missing": sorted(missing), "present_but_about_something_else": sorted(elsewhere),
+                    "word_overlap": overlap})
+    return {"version": NUMBER_CHECK_VERSION, "segments": out, "counts": counts}

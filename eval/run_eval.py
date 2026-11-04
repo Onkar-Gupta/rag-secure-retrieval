@@ -3,6 +3,7 @@
     python eval/run_eval.py --stage tune        # dev split only; writes reports/tuning_dev.json
     python eval/run_eval.py --stage retrieval   # frozen settings from config.yaml; writes reports/retrieval.json
     python eval/run_eval.py --stage model-dev   # dev split through the real model; writes reports/model_dev.json
+    python eval/run_eval.py --stage number-check  # tests the number checker on made cases; no model
 
 Conditions: A = no control, C = filter after retrieval, D = filter inside the query (the served path).
 A leak is judged by the FOLDER in the document path, never by the stored group label.
@@ -429,6 +430,129 @@ def model_dev(args):
     print(json.dumps(summary, indent=1))
 
 
+# ---------- number check self-test (tests the CHECKER, not the model; no model is run) ----------
+#
+# Cases are made automatically from the 60 answerable questions: each gold sentence is a TRUE statement
+# with a known cited chunk. We then damage it in known ways and see whether the checker notices.
+# Acceptance rules for the checker, fixed on 4 Nov 2026 BEFORE the first run. They are about the checker
+# only; they are not pass marks for the model.
+CHECKER_ACCEPTANCE = {
+    "true_sentences_wrongly_flagged_max": 0.05,   # a true sentence cited to its own chunk
+    "wrong_number_caught_min": 0.95,              # a number changed to one found nowhere in the chunk
+    "other_number_in_chunk_caught_min": 0.80,     # a number swapped for another number from the same chunk
+    "spelled_out_number_supported_min": 0.95,     # digits rewritten as words ('27' -> 'twenty-seven')
+    "word_overlap_matched_median_min": 0.80,      # sentence vs its own chunk
+    "word_overlap_mismatched_median_max": 0.40,   # same sentence vs a chunk from another document
+}
+_RAW_NUMBER = re.compile(r"\d+(?:[.,:]\d+)*")
+_WORDS_UNDER_20 = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+_TENS_WORDS = ["x", "x", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+
+def digits_to_words(n):
+    """0 to 99 as English words, for example 27 -> 'twenty-seven'."""
+    if n < 20:
+        return _WORDS_UNDER_20[n]
+    tens, unit = divmod(n, 10)
+    return _TENS_WORDS[tens] + (f"-{_WORDS_UNDER_20[unit]}" if unit else "")
+
+
+def replace_number(sentence, value, new_text):
+    """Replace the first digit token whose tidy value is `value`; None if there is no such token."""
+    for m in _RAW_NUMBER.finditer(sentence):
+        if m.group(0).replace(",", "") == value:
+            return sentence[:m.start()] + new_text + sentence[m.end():]
+    return None
+
+
+def wrong_number_for(value, taken):
+    """A different number that appears nowhere in `taken`, in the same style as `value`."""
+    if ":" in value:
+        candidates = ["23:47", "04:13", "19:29"]
+    elif "." in value:
+        candidates = [value + "7", "9.13", "8.71"]
+    else:
+        candidates = [str(int(value) * 3 + 7), str(int(value) + 11), "9173"]
+    return next((c for c in candidates if c not in taken), None)
+
+
+def number_check_selftest(args):
+    s = frozen_settings()
+    questions = [q for q in load_questions() if q["type"] == "answerable"]
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        _, conn = build_index(tmp, s["chunk_size"], s["chunk_overlap"])
+        text_of = dict(conn.execute("SELECT chunk_id, text FROM chunks"))
+        doc_of = dict(conn.execute("SELECT chunk_id, doc_id FROM chunks"))
+        gold = {q["id"]: gold_chunks(q, conn) for q in questions}
+    all_ids = sorted(text_of)
+
+    def check(sentence, ids):
+        hits = [{"chunk_id": i, "text": text_of[i]} for i in ids]
+        seg = generator.number_support(f"{sentence} [{', '.join(ids)}]", hits)["segments"][0]
+        return seg
+
+    cases = {k: [] for k in ("true_sentences", "wrong_number", "other_number_in_chunk", "spelled_out", "overlap_matched",
+                             "overlap_mismatched")}
+    for n, q in enumerate(questions):
+        ids, sentence = gold[q["id"]], q["gold_chunk_hint"]
+        chunk_numbers = set().union(*(generator.numbers_in(text_of[i]) for i in ids))
+        own = generator.numbers_in(sentence)
+        seg = check(sentence, ids)
+        cases["overlap_matched"].append((q["id"], seg["word_overlap"]))
+        other_doc = next(i for i in all_ids[n * 7 % len(all_ids):] + all_ids if doc_of[i] != doc_of[ids[0]])
+        cases["overlap_mismatched"].append((q["id"], check(sentence, [other_doc])["word_overlap"]))
+        if not own:
+            continue
+        cases["true_sentences"].append((q["id"], seg["status"] == "supported", sentence))
+        for value in sorted(own):
+            wrong = wrong_number_for(value, chunk_numbers)
+            mutated = wrong and replace_number(sentence, value, wrong)
+            if mutated:
+                cases["wrong_number"].append((q["id"], check(mutated, ids)["status"] == "unsupported", mutated))
+            for other in sorted(chunk_numbers - own):
+                swapped = replace_number(sentence, value, other)
+                if swapped:
+                    cases["other_number_in_chunk"].append(
+                        (q["id"], check(swapped, ids)["status"] == "unsupported", swapped))
+            if ":" not in value and "." not in value and "," not in value and 2 <= int(value) <= 99:
+                spelled = replace_number(sentence, value, digits_to_words(int(value)))
+                if spelled:
+                    cases["spelled_out"].append((q["id"], check(spelled, ids)["status"] == "supported", spelled))
+
+    def share(items, want_true=True):
+        good = sum(1 for _, ok, _ in items if ok == want_true)
+        return {**rate(good, len(items)), "failures": [{"question": q, "sentence": t[:140]}
+                                                      for q, ok, t in items if ok != want_true][:10]}
+
+    matched = [v for _, v in cases["overlap_matched"] if v is not None]
+    mismatched = [v for _, v in cases["overlap_mismatched"] if v is not None]
+    a = CHECKER_ACCEPTANCE
+    result = {
+        "stage": "number-check", "checker_version": generator.NUMBER_CHECK_VERSION, "acceptance_fixed_before_run": a,
+        "true_sentences_flagged": share(cases["true_sentences"], want_true=False),
+        "wrong_number_caught": share(cases["wrong_number"]),
+        "other_number_in_chunk_caught": share(cases["other_number_in_chunk"]),
+        "spelled_out_supported": share(cases["spelled_out"]),
+        "word_overlap": {"matched_median": statistics.median(matched), "matched_n": len(matched),
+                         "mismatched_median": statistics.median(mismatched), "mismatched_n": len(mismatched)},
+        "meta": meta(),
+    }
+    result["verdict"] = {
+        "true_sentences_wrongly_flagged": result["true_sentences_flagged"]["rate"] <= a["true_sentences_wrongly_flagged_max"],
+        "wrong_number_caught": result["wrong_number_caught"]["rate"] >= a["wrong_number_caught_min"],
+        "other_number_in_chunk_caught": result["other_number_in_chunk_caught"]["rate"] >= a["other_number_in_chunk_caught_min"],
+        "spelled_out_supported": result["spelled_out_supported"]["rate"] >= a["spelled_out_number_supported_min"],
+        "word_overlap_matched": result["word_overlap"]["matched_median"] >= a["word_overlap_matched_median_min"],
+        "word_overlap_mismatched": result["word_overlap"]["mismatched_median"] <= a["word_overlap_mismatched_median_max"],
+    }
+    write(args.reports / "number_check_selftest.json", result)
+    for key in ("true_sentences_flagged", "wrong_number_caught", "other_number_in_chunk_caught", "spelled_out_supported"):
+        r = result[key]
+        print(f"{key}: {r['k']}/{r['n']} = {r['rate']:.3f}")
+    print("word_overlap:", result["word_overlap"])
+    print("verdict:", json.dumps(result["verdict"]))
+
+
 # ---------- report plumbing ----------
 
 def ram_gb():
@@ -465,10 +589,11 @@ def write(path, obj):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", choices=["tune", "retrieval", "model-dev"], required=True)
+    ap.add_argument("--stage", choices=["tune", "retrieval", "model-dev", "number-check"], required=True)
     ap.add_argument("--reports", type=Path, default=ROOT / "reports")
     args = ap.parse_args()
-    {"tune": tune, "retrieval": retrieval, "model-dev": model_dev}[args.stage](args)
+    {"tune": tune, "retrieval": retrieval, "model-dev": model_dev,
+     "number-check": number_check_selftest}[args.stage](args)
 
 
 if __name__ == "__main__":
