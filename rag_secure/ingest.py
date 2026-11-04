@@ -40,8 +40,9 @@ def open_collection(chroma_dir, embedding_function=None):
     )
 
 
-def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None):
-    """Chunk every document, store vectors in Chroma and text in SQLite. Unchanged files are skipped."""
+def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None, uploader="cli"):
+    """Chunk every document, store vectors in Chroma and text in SQLite. Unchanged files are skipped.
+    `uploader` names who added or changed each document (kept for provenance)."""
     docs_dir = Path(docs_dir)
     if not docs_dir.is_dir():
         raise FileNotFoundError(f"{docs_dir} is not a folder (refusing to treat every document as deleted)")
@@ -71,9 +72,9 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
             col.add(ids=ids, documents=texts, metadatas=metas)
         # Upsert, not replace: a changed file must keep its quarantine flag.
         conn.execute(
-            "INSERT INTO documents (doc_id, grp, sha256) VALUES (?,?,?) "
-            "ON CONFLICT(doc_id) DO UPDATE SET grp=excluded.grp, sha256=excluded.sha256",
-            (doc_id, grp, sha),
+            "INSERT INTO documents (doc_id, grp, sha256, uploader) VALUES (?,?,?,?) "
+            "ON CONFLICT(doc_id) DO UPDATE SET grp=excluded.grp, sha256=excluded.sha256, uploader=excluded.uploader",
+            (doc_id, grp, sha, uploader),
         )
         conn.executemany(
             "INSERT INTO chunks VALUES (?,?,?,?)",

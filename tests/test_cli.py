@@ -27,3 +27,16 @@ def test_quarantine_command(tmp_path, capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--config", str(cfg), "quarantine", "finance/nope.md"])
     assert "unknown document" in str(exc.value)
+
+
+def test_ask_rejects_unknown_user_and_bad_questions_before_any_model_call(tmp_path):
+    cfg = tmp_path / "config.yaml"
+    users = tmp_path / "users.yaml"
+    users.write_text("users:\n  guest:\n    groups: [public]\n    api_key: k\n", encoding="utf-8")
+    cfg.write_text(f"users_file: {users.as_posix()}\nmax_question_chars: 20\n", encoding="utf-8")
+    with pytest.raises(SystemExit, match="unknown user"):
+        main(["--config", str(cfg), "ask", "hello", "--user", "nobody"])
+    with pytest.raises(SystemExit, match="longer than 20"):
+        main(["--config", str(cfg), "ask", "x" * 30, "--user", "guest"])
+    with pytest.raises(SystemExit, match="control or invisible"):
+        main(["--config", str(cfg), "ask", "hi" + chr(0x200B) + "there", "--user", "guest"])

@@ -1,4 +1,5 @@
 # Paths
+users_file: eval/users.yaml   # demo users with placeholder keys; use your own file and strong keys
 docs_dir: data/docs
 chroma_dir: chroma
 db_path: rag.sqlite
@@ -18,3 +19,4 @@ model: phi4-mini:3.8b
 temperature: 0
 seed: 0
 max_tokens: 300
+max_question_chars: 500

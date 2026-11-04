@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS documents (
     doc_id TEXT PRIMARY KEY,
     grp TEXT NOT NULL,
     sha256 TEXT NOT NULL,
-    quarantined INTEGER NOT NULL DEFAULT 0
+    quarantined INTEGER NOT NULL DEFAULT 0,
+    uploader TEXT
 );
 CREATE TABLE IF NOT EXISTS chunks (
     chunk_id TEXT PRIMARY KEY,
@@ -19,10 +20,12 @@ CREATE TABLE IF NOT EXISTS chunks (
 def connect(path):
     conn = sqlite3.connect(path)
     conn.executescript(SCHEMA)
-    # Databases made before the quarantine flag existed get the column added.
-    if "quarantined" not in {r[1] for r in conn.execute("PRAGMA table_info(documents)")}:
-        conn.execute("ALTER TABLE documents ADD COLUMN quarantined INTEGER NOT NULL DEFAULT 0")
-        conn.commit()
+    # Databases made before a column existed get it added.
+    have = {r[1] for r in conn.execute("PRAGMA table_info(documents)")}
+    for column, ddl in (("quarantined", "INTEGER NOT NULL DEFAULT 0"), ("uploader", "TEXT")):
+        if column not in have:
+            conn.execute(f"ALTER TABLE documents ADD COLUMN {column} {ddl}")
+    conn.commit()
     return conn
 
 
