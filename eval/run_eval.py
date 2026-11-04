@@ -301,12 +301,17 @@ def generation_rows(questions, users, vecs, col, conn, cfg, llm, gold, cmap, del
     timed, rows = TimedLLM(llm), []
     for i, q in enumerate(questions, 1):
         groups, before = users[q["asker"]]["groups"], timed.calls
+        started = time.perf_counter()
         out, trace = generator.ask_with_trace(
             q["question"], groups, col, conn, cfg, timed, embedding=vecs[q["id"]], delimit=delimit)
+        total = time.perf_counter() - started  # search plus model: what an outside observer would see
         called = timed.calls > before
         support = generator.number_support(out["answer"], [h for h in trace if h["used"]]) if out["found"] else None
         row = {"id": q["id"], "type": q["type"], "asker": q["asker"], "called_model": called,
-               "model_seconds": timed.last if called else None, "found": out["found"], "answer": out["answer"],
+               "model_seconds": timed.last if called else None, "total_seconds": total,
+               "body_bytes": len(json.dumps({"answer": out["answer"], "sources": out["sources"],
+                                             "found": out["found"]}).encode()),
+               "found": out["found"], "answer": out["answer"],
                "sources": out["sources"], "invalid_citations": out["invalid_citations"],
                "canary_leaks": canary_leaks(out["answer"], groups, cmap),
                "cites_gold": bool(set(out["sources"]) & set(gold.get(q["id"], []))),
@@ -319,6 +324,48 @@ def generation_rows(questions, users, vecs, col, conn, cfg, llm, gold, cmap, del
         log(f"[model-dev] {i}/{len(questions)} {q['id']} {q['type']}: "
             f"{f'{timed.last:.1f}s' if called else 'no model call'}", flush=True)
     return rows
+
+
+def bootstrap_median_diff(a, b, resamples=10000, seed=0):
+    """Unpaired bootstrap of median(a) - median(b); each group is resampled on its own. 95% interval."""
+    rng = random.Random(seed)
+    diffs = sorted(
+        statistics.median([a[rng.randrange(len(a))] for _ in a]) - statistics.median([b[rng.randrange(len(b))] for _ in b])
+        for _ in range(resamples))
+    return {"median_diff": statistics.median(a) - statistics.median(b),
+            "ci95": [diffs[int(0.025 * resamples)], diffs[int(0.975 * resamples) - 1]],
+            "resamples": resamples, "seed": seed, "n_a": len(a), "n_b": len(b)}
+
+
+def side_channel_report(rows):
+    """Report-only (no pass mark): do cross-group and 'not in any document' questions differ in time or size?
+
+    This compares different questions, so it can only show a large gap. It is not proof of absence; the
+    cleaner test is scripts/timing_probe.py, which asks the same question with and without other groups'
+    documents in the index."""
+    groups = {t: [r for r in rows if r["type"] == t] for t in ("cross_group", "negative")}
+
+    def pct(xs, q):
+        return sorted(xs)[max(0, int(q * len(xs)) - 1)]
+
+    out = {}
+    for typ, rs in groups.items():
+        secs = [r["total_seconds"] for r in rs]
+        out[typ] = ({"n": len(rs), "reached_model": rate(sum(r["called_model"] for r in rs), len(rs)),
+                     "total_seconds": {"median": statistics.median(secs), "p90": pct(secs, 0.9)},
+                     "body_bytes": {"median": statistics.median(r["body_bytes"] for r in rs),
+                                    "min": min(r["body_bytes"] for r in rs), "max": max(r["body_bytes"] for r in rs)}}
+                    if rs else {"n": 0})
+    cross, neg = groups["cross_group"], groups["negative"]
+    if cross and neg:
+        out["total_seconds_cross_minus_negative"] = bootstrap_median_diff(
+            [r["total_seconds"] for r in cross], [r["total_seconds"] for r in neg])
+        a = [r["total_seconds"] for r in cross if not r["called_model"]]
+        b = [r["total_seconds"] for r in neg if not r["called_model"]]
+        if a and b:  # only the search path: the model call is left out, since it dominates the time
+            out["search_only_seconds_cross_minus_negative"] = bootstrap_median_diff(a, b)
+    out["distinct_sizes_of_the_fixed_reply_body"] = sorted({r["body_bytes"] for r in rows if r["is_fixed_reply"]})
+    return out
 
 
 def number_support_rate(rows):
@@ -345,6 +392,7 @@ def summarise(rows):
         "canary_leaks_total": sum(len(r["canary_leaks"]) for r in rows),
         "runs_with_invalid_citation": sum(bool(r["invalid_citations"]) for r in rows),
         "number_support_answerable": number_support_rate(ans),
+        "side_channel": side_channel_report(rows),
         "injection_marker_in_answer_dev": rate(sum(r["marker_in_answer"] for r in by["injection"]), len(by["injection"])),
     }
 

@@ -141,3 +141,26 @@ def test_number_support_is_reported_per_row_and_in_the_summary(store):
     assert rows[0]["number_support"]["unsupported"][0]["missing"] == ["27"]
     summary = run_eval.summarise(rows)["number_support_answerable"]
     assert summary["k"] == 0 and summary["n"] == 1 and summary["sentences_without_numbers"] == 0
+
+
+def test_bootstrap_median_diff_is_reproducible_and_finds_a_clear_gap():
+    slow, fast = [2.0, 2.1, 1.9, 2.2, 2.0, 2.1], [1.0, 1.1, 0.9, 1.0, 1.2, 1.0]
+    first, second = run_eval.bootstrap_median_diff(slow, fast), run_eval.bootstrap_median_diff(slow, fast)
+    assert first == second and first["median_diff"] == pytest.approx(1.0, abs=0.06)
+    assert first["ci95"][0] > 0  # a clear gap: the interval excludes zero
+    same = run_eval.bootstrap_median_diff([1.0, 1.1, 0.9, 1.0], [1.0, 1.1, 0.9, 1.0])
+    assert same["ci95"][0] <= 0 <= same["ci95"][1]  # no gap: the interval includes zero
+
+
+def test_side_channel_report_compares_types_and_checks_the_fixed_reply_size():
+    def row(typ, secs, called, size=88, fixed=True):
+        return {"type": typ, "total_seconds": secs, "called_model": called, "body_bytes": size, "is_fixed_reply": fixed}
+
+    rows = [row("cross_group", 0.02 + i / 1000, False) for i in range(6)]
+    rows += [row("negative", 0.02 + i / 1000, False) for i in range(5)] + [row("negative", 2.5, True, 130, False)]
+    report = run_eval.side_channel_report(rows)
+    assert report["cross_group"]["n"] == 6 and report["negative"]["reached_model"]["k"] == 1
+    assert report["distinct_sizes_of_the_fixed_reply_body"] == [88]  # every fixed reply is the same size
+    only_search = report["search_only_seconds_cross_minus_negative"]
+    assert only_search["ci95"][0] <= 0 <= only_search["ci95"][1]
+    assert report["negative"]["body_bytes"]["max"] == 130
