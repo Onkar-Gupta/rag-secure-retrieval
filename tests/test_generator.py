@@ -168,18 +168,20 @@ def test_number_present_in_the_cited_chunk_is_supported_and_a_wrong_one_is_not()
 
 
 def test_a_sentence_with_two_citations_is_supported_if_each_number_is_in_either_chunk():
-    hits = [chunk("a#0", "The fee is 30 euros."), chunk("b#0", "It is due on day 15.")]
-    out = generator.number_support("Pay 30 euros by day 15 [a#0, b#0].", hits)
-    assert out["counts"]["supported"] == 1
-    only_a = generator.number_support("Pay 30 euros by day 15 [a#0].", hits)
+    hits = [chunk("a#0", "The monthly fee is 30 euros for each vehicle."),
+            chunk("b#0", "Payment is due on day 15 of the month.")]
+    answer = "The monthly fee is 30 euros for each vehicle and payment is due on day 15 of the month"
+    assert generator.number_support(f"{answer} [a#0, b#0].", hits)["counts"]["supported"] == 1
+    only_a = generator.number_support(f"{answer} [a#0].", hits)
     assert only_a["segments"][0]["missing"] == ["15"]  # day 15 is not in the chunk this sentence cites
 
 
 def test_times_and_thousands_separators_are_parsed_whole():
     assert generator.numbers_in("Core hours are 10:00 to 15:00 and cost 40,000 or 2.5") == {
         "10:00", "15:00", "40000", "2.5"}
-    hits = [chunk("a#0", "Core hours are 10:00 to 15:00. Budget 40,000 euros.")]
-    assert generator.number_support("Hours 10:00 to 15:00 for 40,000 euros [a#0].", hits)["counts"]["supported"] == 1
+    text = "Core hours are 10:00 to 15:00 and the annual budget is 40,000 euros."
+    out = generator.number_support(f"{text[:-1]} [a#0].", [chunk("a#0", text)])
+    assert out["counts"]["supported"] == 1
 
 
 def test_sentences_without_numbers_are_counted_apart_and_ids_digits_are_ignored():

@@ -514,7 +514,8 @@ def number_check_selftest(args):
                 if swapped:
                     cases["other_number_in_chunk"].append(
                         (q["id"], check(swapped, ids)["status"] == "unsupported", swapped))
-            if ":" not in value and "." not in value and "," not in value and 2 <= int(value) <= 99:
+            plain = ":" not in value and "." not in value and "," not in value and 2 <= int(value) <= 99
+            if plain and not re.search(rf"(?<!\d){value}(st|nd|rd|th)\b", sentence):  # ordinals are handled below
                 spelled = replace_number(sentence, value, digits_to_words(int(value)))
                 if spelled:
                     cases["spelled_out"].append((q["id"], check(spelled, ids)["status"] == "supported", spelled))

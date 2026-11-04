@@ -123,17 +123,24 @@ def ollama_llm(model, url="http://localhost:11434", temperature=0, seed=0, max_t
     return call
 
 
-# ---- report-only support checks (version 2) -------------------------------------------------------
+# ---- report-only support checks (version 3) -------------------------------------------------------
 # Not used in the served answer. They measure how well an answer sticks to the chunks it cites.
 
-NUMBER_CHECK_VERSION = 2
+NUMBER_CHECK_VERSION = 3
 _TOKEN = re.compile(r"\d+(?:[.,:]\d+)*|[a-z]+|[.!?;\n]")
 _CITED_SEGMENT = re.compile(r"([^\[\]]*)\[([^\[\]\n]+)\]")
 _UNITS = {w: i for i, w in enumerate(
     ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"])}
 _TENS = {w: 10 * i for i, w in enumerate(["x", "x", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]) if w != "x"}
-_STOP = {"the", "a", "an", "of", "to", "in", "on", "at", "for", "and", "or", "is", "are", "was", "were", "be", "by", "with", "that", "this", "it", "as", "from", "than", "out", "has", "have", "had", "not", "no", "can", "will", "must", "may", "all", "any", "if", "its", "their", "our", "your", "you", "we", "they", "he", "she"}
+_STOP = {"the", "a", "an", "of", "to", "in", "on", "at", "for", "and", "or", "is", "are", "was", "were", "be", "by", "with", "that", "this", "it", "as", "from", "than", "out", "has", "have", "had", "not", "no", "can", "will", "must", "may", "all", "any", "if", "its", "their", "our", "your", "you", "we", "they", "he", "she", "st", "nd", "rd", "th"}
 _WINDOW = 2  # content words on each side of a number that count as its context
+
+
+_ORDINALS = {w: v for v, w in enumerate(
+    ["x", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"]) if w != "x"}
+_ORDINALS.update({"twentieth": 20, "thirtieth": 30, "fortieth": 40, "fiftieth": 50, "sixtieth": 60,
+                  "seventieth": 70, "eightieth": 80, "ninetieth": 90})
+_MIN_SHARED = 2  # neighbouring content words a number must share with the same number in a cited chunk
 
 
 def _number_word(raw, i):
@@ -144,7 +151,11 @@ def _number_word(raw, i):
     if w in _TENS:
         if nxt in _UNITS and 1 <= _UNITS[nxt] <= 9:
             return _TENS[w] + _UNITS[nxt], i + 2
+        if nxt in _ORDINALS and 1 <= _ORDINALS[nxt] <= 9:  # 'twenty-sixth'
+            return _TENS[w] + _ORDINALS[nxt], i + 2
         return _TENS[w], i + 1
+    if w in _ORDINALS and _ORDINALS[w] >= 4:  # 'fifteenth'; first, second and third are too often plain words
+        return _ORDINALS[w], i + 1
     if w in _UNITS:
         if nxt in ("hundred", "thousand"):
             return _UNITS[w] * (100 if nxt == "hundred" else 1000), i + 2
@@ -242,7 +253,8 @@ def number_support(answer, hits):
         for number, contexts in asked.items():
             cited = [chunk_ctx[i][number] for i in ids if i in chunk_ctx and number in chunk_ctx[i]]
             found = [c for per_chunk in cited for c in per_chunk]
-            ok = any((not a) or (a & c) for a in contexts for c in found)  # no context words: presence suffices
+            # no context words in the answer: presence suffices; otherwise share up to _MIN_SHARED of them
+            ok = any((not a) or len(a & c) >= min(_MIN_SHARED, len(a)) for a in contexts for c in found)
             if not ok:
                 missing.append(number)
                 if found:
