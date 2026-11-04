@@ -20,3 +20,10 @@ temperature: 0
 seed: 0
 max_tokens: 300
 max_question_chars: 500
+
+# Service
+host: 127.0.0.1          # bind to this machine only; change deliberately to expose it
+port: 8000
+api_key_header: X-API-Key
+admin_users: [admin]     # may call POST /ingest
+log_question_text: false # false: the query log keeps only a hash of each question

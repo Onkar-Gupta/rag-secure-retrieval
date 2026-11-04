@@ -11,10 +11,10 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Onkar Gupta" }]
 keywords = ["rag", "retrieval-augmented-generation", "llm-security"]
-dependencies = ["PyYAML==6.*", "chromadb==1.5.9", "pypdf==6.21.4"]
+dependencies = ["PyYAML==6.*", "chromadb==1.5.9", "pypdf==6.21.4", "fastapi==0.162.0", "uvicorn==0.54.0"]
 
 [project.optional-dependencies]
-dev = ["pytest==9.*", "ruff==0.*"]
+dev = ["pytest==9.*", "ruff==0.*", "httpx==0.28.1"]
 
 [project.scripts]
 rag = "rag_secure.cli:main"

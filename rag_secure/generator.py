@@ -61,11 +61,36 @@ def answer(question, hits, llm, not_found, delimit=True):
     return {"answer": text, "sources": valid, "invalid_citations": invalid, "found": True}
 
 
+def ask_with_trace(question, groups, col, conn, cfg, llm, embedding=None, delimit=True):
+    """Retrieve (group filter inside the query, then the relevance cut-off) and answer.
+
+    Returns (result, trace). The trace lists the top-k chunks the user is ALLOWED to see, closest
+    first, each marked `used` when it passed the cut-off and so reached the model. Chunks from
+    other groups never appear anywhere here, because they were never retrieved."""
+    retrieved = retrieve(col, conn, question, groups, k=cfg["top_k"], embedding=embedding)
+    for h in retrieved:
+        h["used"] = h["distance"] <= cfg["relevance_threshold"]
+    used = [h for h in retrieved if h["used"]]
+    return answer(question, used, llm, cfg["not_found_response"], delimit), retrieved
+
+
+def explanation(result, trace, cutoff, snippet_chars=160):
+    """Why the answer looks the way it does. Built only from chunks the user may already see."""
+    return {
+        "outcome": "answered" if result["found"] else "not_found",
+        "cutoff": cutoff,
+        "retrieved": [
+            {"chunk_id": h["chunk_id"], "group": h["group"], "distance": round(h["distance"], 4),
+             "used": h["used"], "cited": h["chunk_id"] in result["sources"],
+             "snippet": h["text"][:snippet_chars]}
+            for h in trace
+        ],
+    }
+
+
 def ask(question, groups, col, conn, cfg, llm, embedding=None, delimit=True):
-    """Retrieve (group filter inside the query, then the relevance cut-off) and answer."""
-    hits = retrieve(col, conn, question, groups, k=cfg["top_k"], threshold=cfg["relevance_threshold"],
-                    embedding=embedding)
-    return answer(question, hits, llm, cfg["not_found_response"], delimit)
+    """Same as ask_with_trace, returning only the result."""
+    return ask_with_trace(question, groups, col, conn, cfg, llm, embedding, delimit)[0]
 
 
 def ollama_llm(model, url="http://localhost:11434", temperature=0, seed=0, max_tokens=300, timeout=300):

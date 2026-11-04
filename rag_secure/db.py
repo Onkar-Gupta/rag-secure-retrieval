@@ -1,3 +1,5 @@
+import datetime
+import hashlib
 import sqlite3
 
 SCHEMA = """
@@ -13,6 +15,16 @@ CREATE TABLE IF NOT EXISTS chunks (
     doc_id TEXT NOT NULL REFERENCES documents(doc_id),
     page INTEGER,
     text TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS query_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts TEXT NOT NULL,
+    user TEXT NOT NULL,
+    question_hash TEXT NOT NULL,
+    question_text TEXT,
+    chunk_ids TEXT NOT NULL,
+    found INTEGER NOT NULL,
+    latency_ms INTEGER NOT NULL
 );
 """
 
@@ -39,3 +51,15 @@ def set_quarantine(conn, doc_id, on=True):
 
 def quarantined_docs(conn):
     return [d for (d,) in conn.execute("SELECT doc_id FROM documents WHERE quarantined=1")]
+
+
+def log_query(conn, user, question, chunk_ids, found, latency_ms, keep_text=False):
+    """Record one question. By default only a hash of the question is kept, not the text."""
+    digest = hashlib.sha256(question.encode()).hexdigest()[:16]
+    conn.execute(
+        "INSERT INTO query_log (ts, user, question_hash, question_text, chunk_ids, found, latency_ms) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (datetime.datetime.now().astimezone().isoformat(timespec="seconds"), user, digest,
+         question if keep_text else None, ",".join(chunk_ids), int(found), int(latency_ms)),
+    )
+    conn.commit()

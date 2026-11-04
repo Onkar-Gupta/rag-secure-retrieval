@@ -18,6 +18,8 @@ def main(argv=None):
     a.add_argument("question")
     a.add_argument("--user", required=True, help="a user from the users file, for example eng")
     a.add_argument("--no-delimit", action="store_true", help="do not wrap context in DOC/END markers")
+    a.add_argument("--explain", action="store_true", help="also show which chunks were retrieved and used")
+    sub.add_parser("serve", help="start the HTTP service")
     args = parser.parse_args(argv)
     if args.command is None:
         return
@@ -41,12 +43,24 @@ def main(argv=None):
         except ValueError as e:
             raise SystemExit(f"error: {e}") from None
         llm = generator.ollama_llm(cfg["model"], cfg["ollama_url"], cfg["temperature"], cfg["seed"], cfg["max_tokens"])
-        result = generator.ask(
+        result, trace = generator.ask_with_trace(
             question, users[args.user]["groups"], ingest.open_collection(cfg["chroma_dir"]),
             db.connect(cfg["db_path"]), cfg, llm, delimit=not args.no_delimit,
         )
         print(result["answer"])
         print("sources:", ", ".join(result["sources"]) or "none")
+        if args.explain:
+            why = generator.explanation(result, trace, cfg["relevance_threshold"])
+            print(f"outcome: {why['outcome']} (cut-off {why['cutoff']:.4f})")
+            for h in why["retrieved"]:
+                flags = ("used" if h["used"] else "below cut-off") + (", cited" if h["cited"] else "")
+                print(f"  {h['chunk_id']}  distance {h['distance']:.4f}  {flags}\n    {h['snippet']!r}")
+    elif args.command == "serve":
+        import uvicorn
+
+        from rag_secure import serve
+
+        uvicorn.run(serve.build_app(cfg), host=cfg.get("host", "127.0.0.1"), port=cfg.get("port", 8000))
     elif args.command == "quarantine":
         try:
             db.set_quarantine(db.connect(cfg["db_path"]), args.doc_id, on=not args.release)
