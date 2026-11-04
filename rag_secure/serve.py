@@ -1,10 +1,13 @@
+import threading
 import time
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel
 
-from rag_secure import db, generator, ingest, security
+from rag_secure import db, demo, generator, ingest, security
 
 
 class AskRequest(BaseModel):
@@ -16,11 +19,39 @@ def create_app(cfg, users, col, llm, embedding_function=None):
     """The HTTP service. `llm` is a function (system, user) -> text, so tests can pass a fake.
 
     A fresh SQLite connection is opened per request, which keeps the threaded server safe."""
-    app = FastAPI(title="rag-secure-retrieval", version="0.1.0")
+    demo_on = bool(cfg.get("demo_mode", False))
+    sessions = demo.Sessions(cfg.get("demo_ttl_seconds", 3600), cfg.get("demo_max_sessions", 20))
+    lock = threading.Lock()  # one ingest at a time
+
+    def reindex(embedding=embedding_function):
+        return ingest.ingest(cfg["docs_dir"], cfg["chroma_dir"], cfg["db_path"], cfg["chunk_size"],
+                             cfg["chunk_overlap"], embedding, uploader="demo", min_page_chars=cfg.get("min_page_chars", 20))
+
+    def end_sessions(groups):
+        """Delete these sessions' folders and drop their chunks from the index."""
+        if groups:
+            with lock:
+                demo.remove_folders(cfg["docs_dir"], groups)
+                reindex()
+
+    @asynccontextmanager
+    async def lifespan(_app):
+        if demo_on:
+            end_sessions(demo.leftover_groups(cfg["docs_dir"]))  # left by a crash
+        yield
+        if demo_on:
+            end_sessions(sessions.pop_all())
+
+    app = FastAPI(title="rag-secure-retrieval", version="0.1.0", lifespan=lifespan)
+    app.state.sessions = sessions
     header = cfg.get("api_key_header", "X-API-Key")
 
     def current_user(x_api_key: str | None = Header(default=None, alias=header)):
         found = security.user_for_key(users, x_api_key)
+        if found is None and demo_on:
+            end_sessions(sessions.pop_expired())
+            live = sessions.lookup(x_api_key)
+            found = (live[0], ["public", live[0]]) if live else None
         if found is None:  # same reply for a missing key and a wrong key
             raise HTTPException(status_code=401, detail="invalid or missing API key")
         return found
@@ -61,6 +92,55 @@ def create_app(cfg, users, col, llm, embedding_function=None):
             raise HTTPException(status_code=403, detail="admin only")
         return ingest.ingest(cfg["docs_dir"], cfg["chroma_dir"], cfg["db_path"], cfg["chunk_size"],
                              cfg["chunk_overlap"], embedding_function, uploader=name)
+
+    @app.post("/session")
+    def new_session():
+        if not demo_on:
+            raise HTTPException(status_code=404, detail="demo mode is off")
+        end_sessions(sessions.pop_expired())
+        try:
+            key, group = sessions.create()
+        except demo.DemoFull:
+            raise HTTPException(status_code=503, detail="the demo is full, try again later") from None
+        return {"key": key, "group": group, "groups": ["public", group], "expires_in_seconds": sessions.ttl,
+                "max_files": cfg.get("demo_max_files", 3), "max_file_mb": cfg.get("demo_max_file_mb", 5)}
+
+    @app.post("/upload")
+    async def upload(request: Request, user: Annotated[tuple, Depends(current_user)],
+                     x_filename: str | None = Header(default=None)):
+        """Add one file to the caller's own session group. The group is never taken from the request."""
+        group = user[0]
+        if not demo_on or not sessions.is_session_group(group):
+            raise HTTPException(status_code=403, detail="uploads are only for demo sessions")
+        name = demo.clean_name(x_filename)
+        if isinstance(name, tuple):
+            raise HTTPException(status_code=name[0], detail=name[1])
+        limit = int(cfg.get("demo_max_file_mb", 5) * 1024 * 1024)
+        if int(request.headers.get("content-length") or 0) > limit:
+            raise HTTPException(status_code=413, detail="file too large")
+        body = b""
+        async for chunk in request.stream():
+            body += chunk
+            if len(body) > limit:
+                raise HTTPException(status_code=413, detail="file too large")
+        if not body:
+            raise HTTPException(status_code=400, detail="empty file")
+        _, session = sessions.lookup(request.headers.get(header))
+        folder = Path(cfg["docs_dir"]) / group
+        with lock:
+            if name in session["files"] or len(session["files"]) >= cfg.get("demo_max_files", 3):
+                raise HTTPException(status_code=409, detail="file limit reached or name already used")
+            folder.mkdir(exist_ok=True)
+            (folder / name).write_bytes(body)
+            try:
+                counts = reindex()
+            except Exception:  # noqa: BLE001  any unreadable file is rolled back and refused
+                (folder / name).unlink(missing_ok=True)
+                reindex()
+                raise HTTPException(status_code=422, detail="could not read that file") from None
+            session["files"].append(name)
+        return {"file": name, "chunks": counts["chunks"], "pages_without_text": counts["pages_without_text"],
+                "files_used": len(session["files"]), "max_files": cfg.get("demo_max_files", 3)}
 
     return app
 
