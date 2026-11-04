@@ -1,0 +1,43 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 7 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 301 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Logs) Tj T* () Tj T* (Application logs are kept for 45 days and then deleted. Security audit logs are) Tj T* (kept for 400 days. Debug logs are kept for 3 days only and may not contain) Tj T* (customer data. Log deletion is automatic and runs every night at 02:00.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 7 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 306 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Backups) Tj T* () Tj T* (Database backups are taken every 6 hours and kept for 35 days. A restore test is) Tj T* (done on the last Friday of every month. Backups are encrypted and stored in a) Tj T* (second region. The retention review reference is CANARY-ENG-f0f5c86f.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000247 00000 n 
+0000000599 00000 n 
+0000000725 00000 n 
+0000001082 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1152
+%%EOF

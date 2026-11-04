@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 287 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Timeline) Tj T* () Tj T* (The quarterly close starts on working day 1 after the quarter ends. Sub-ledgers) Tj T* (are locked on working day 3. The draft accounts are ready on working day 7, and) Tj T* (the final accounts are signed on working day 10.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 312 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Reconciliations) Tj T* () Tj T* (Bank balances are reconciled to the ledger every quarter. Any difference above) Tj T* (250 euros must be investigated and explained in writing. Intercompany balances) Tj T* (must agree to the cent. The reconciliation file is kept for 7 years.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 302 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Sign-off) Tj T* () Tj T* (The accounts are reviewed by the financial controller and signed by the finance) Tj T* (director. The audit committee receives the signed accounts within 5 working) Tj T* (days. The close reference for this document is CANARY-FIN-3b4a2dac.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000253 00000 n 
+0000000591 00000 n 
+0000000717 00000 n 
+0000001080 00000 n 
+0000001206 00000 n 
+0000001559 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+1629
+%%EOF

@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 347 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Rotation) Tj T* () Tj T* (The on-call rota changes every Monday at 10:00. Each shift lasts 7 days, and) Tj T* (each engineer takes at most one shift in every 4 weeks. The primary and the) Tj T* (secondary engineer are listed in the rota channel. Swaps must be agreed in) Tj T* (writing before the shift begins.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 382 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Paging rules) Tj T* () Tj T* (A critical page must be acknowledged within 5 minutes. A high priority page must) Tj T* (be acknowledged within 15 minutes. If the primary engineer does not respond in) Tj T* (time, the page goes to the secondary engineer, then to the engineering manager.) Tj T* (Silent pages are never used for production outages.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 333 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Handover) Tj T* () Tj T* (At the end of a shift the engineer writes a handover note listing open) Tj T* (incidents, temporary fixes and follow-up tasks. The note is posted in the rota) Tj T* (channel by 10:00 on the Monday. The handover reference for this document is) Tj T* (CANARY-ENG-88d92e42.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000253 00000 n 
+0000000651 00000 n 
+0000000777 00000 n 
+0000001210 00000 n 
+0000001336 00000 n 
+0000001720 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+1790
+%%EOF

@@ -210,6 +210,20 @@ Dated entries only. Each entry says what changed, why, and whether any result ex
 
 (4) **Number check on the test split, read by hand.** Three flags: q107 and q116 state a true fact but cite a neighbouring chunk that does not hold it (real catches); q044 is a true claim whose year only describes the budget (a false alarm). The automatic score for answerable test questions is 29 of 30 (0.97).
 
+**4 Nov 2026, PDF check: a separate, pre-registered mini-test (the main test run had already happened; this changes nothing in it).** The main set has no PDFs, so page citations and the group filter on PDFs were untested. This entry fixes the PDF check's data, rules and pass marks BEFORE its harness exists or anything is run. It is a different corpus with its own index, so no number in `reports/retrieval.json` or `reports/generation.json` changes.
+
+*Ingestion changes made for it, which touch PDFs only (the freeze guard still passes, so every Markdown chunk and prompt is byte-identical):* line breaks inside a PDF page are joined into single spaces so a sentence reads as one piece; a PDF page with fewer than `min_page_chars` (20) characters is reported by `rag ingest` as probably scanned, and no empty chunk is stored; sources returned by the API and `rag ask` now include the page for PDF sources.
+
+*Data (`data/docs_pdf/`, CC0, fictional Ogento Systems, built by `scripts/make_pdf_set.py`, checked by `eval/check_pdf_data.py`):* 6 PDFs of 2 to 3 pages (2 public, 2 engineering, 2 finance, 15 pages in all), each restricted document with one unique canary string on a stated page. *Questions (`eval/pdf_questions.jsonl`):* 12, written by the code author before any run: 6 answerable (one per document, spread over all pages that hold a fact), 4 cross-group (the asker may not read the document) and 2 negative (the topic is in no PDF). Each answerable and cross-group question names the document and the page that holds the evidence.
+
+*Settings:* everything as frozen above (chunk 300, overlap 100, top_k 5, cut-off 0.6079088449478149, model, prompt, parser, temperature 0, seed 0), condition D only for the answers. No tuning and no dev split.
+
+*Run:* `python eval/run_eval.py --stage pdf-check`, once. A second run needs a written reason and every run is kept. The retrieval part asks all 12 questions as each of the 4 users under D (48 runs) and, as a control, under no control (A). The answer part asks each question as its asker under D (12 answers).
+
+*Pass marks, fixed now:* (1) **Isolation on PDFs:** 0 forbidden chunks in the context in all 48 retrieval runs under D, and 0 canary strings from a folder the asker may not read in the 12 answers. (2) **Right page found:** for the 6 answerable questions, the top 5 chunks under D include a chunk of the right document, on the right page, that contains at least half of the evidence sentence: at least 5 of 6. (3) **Right page cited:** for the same 6, the answer cites a chunk of the right document on the right page: at least 5 of 6. *Reported without a pass mark:* cross-group questions answered with the fixed reply (of 4), negative questions answered with the fixed reply (of 2), forbidden chunks in context under no control (the control must be above 0), median seconds per answer, and the number-support score. Every failure is listed.
+
+*Limits, stated now:* the author wrote the PDFs, the questions and the code, so this is a self-test; there are only 6 answerable questions, so one miss moves a rate by 0.17 and the 5-of-6 mark leaves room for exactly one miss; the PDFs are clean generated text with a real text layer, not scans, so OCR is untested (scanned pages are only detected and reported).
+
 ## 12. Known biases and limits
 
 - **Self-test.** The same person wrote the documents, the questions, the answer spans and the code. This is not an independent benchmark, and the README says so.
