@@ -224,6 +224,8 @@ Dated entries only. Each entry says what changed, why, and whether any result ex
 
 *Limits, stated now:* the author wrote the PDFs, the questions and the code, so this is a self-test; there are only 6 answerable questions, so one miss moves a rate by 0.17 and the 5-of-6 mark leaves room for exactly one miss; the PDFs are clean generated text with a real text layer, not scans, so OCR is untested (scanned pages are only detected and reported).
 
+**4 Nov 2026, after the PDF check run (the result existed; nothing below changes a pass mark or a number).** The PDF check was run once on commit cbb1bc6 from a clean tree (`reports/pdf_check.json`: 6 PDFs, 18 chunks, 12 questions, 48 retrieval runs per condition, 12 answers). One disclosure: the first attempt to start the run stopped immediately, before any question or model call, and produced no result, because the PDF set's licence file sat at the top of `data/docs_pdf/`, where ingestion refuses a file that belongs to no group. The file was moved to `data/LICENSE-PDF-DATA.txt`, the generator script and a guard test were updated, and the run was then made once. No PDF, question, pass mark or setting changed.
+
 ## 12. Known biases and limits
 
 - **Self-test.** The same person wrote the documents, the questions, the answer spans and the code. This is not an independent benchmark, and the README says so.

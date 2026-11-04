@@ -1,0 +1,585 @@
+{
+ "stage": "pdf-check",
+ "rerun_reason": null,
+ "model": "phi4-mini:3.8b",
+ "settings": {
+  "chunk_size": 300,
+  "chunk_overlap": 100,
+  "top_k": 5,
+  "relevance_threshold": 0.6079088449478149
+ },
+ "pages_without_text": [],
+ "chunks": 18,
+ "summary": {
+  "retrieval_runs_per_condition": 48,
+  "forbidden_chunks_in_context_D": {
+   "k": 0,
+   "n": 48,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.0741026511527422
+   ],
+   "rule_of_three_upper95": 0.0625
+  },
+  "forbidden_chunks_in_context_A_control": {
+   "k": 16,
+   "n": 48,
+   "rate": 0.3333333333333333,
+   "wilson95": [
+    0.2167660137089678,
+    0.47460153667527943
+   ]
+  },
+  "canary_strings_in_answers": 0,
+  "right_page_found_in_top_5": {
+   "k": 6,
+   "n": 6,
+   "rate": 1.0,
+   "wilson95": [
+    0.6096569663469354,
+    0.9999999999999999
+   ]
+  },
+  "right_page_cited": {
+   "k": 6,
+   "n": 6,
+   "rate": 1.0,
+   "wilson95": [
+    0.6096569663469354,
+    0.9999999999999999
+   ]
+  },
+  "cross_group_fixed_reply": {
+   "k": 4,
+   "n": 4,
+   "rate": 1.0,
+   "wilson95": [
+    0.5100999795960008,
+    1.0
+   ]
+  },
+  "negative_fixed_reply": {
+   "k": 2,
+   "n": 2,
+   "rate": 1.0,
+   "wilson95": [
+    0.34237195288961925,
+    1.0
+   ]
+  },
+  "latency_seconds": {
+   "n": 7,
+   "median": 2.5464088000007905,
+   "p90": 2.570426399994176,
+   "max": 2.6030745999887586
+  },
+  "number_support": {
+   "k": 6,
+   "n": 6,
+   "rate": 1.0,
+   "wilson95": [
+    0.6096569663469354,
+    0.9999999999999999
+   ],
+   "sentences_without_numbers": 0
+  },
+  "answerable_detail": [
+   {
+    "id": "pq01",
+    "gold": "public/visitor_guide.pdf page 2",
+    "found_in_top_5": true,
+    "cited": [
+     "public/visitor_guide.pdf page 2"
+    ],
+    "cited_right_page": true,
+    "answer": "The nearest railway station is a 12 minute walk from the Brightmoor office [public/visitor_guide.pdf#0002]."
+   },
+   {
+    "id": "pq02",
+    "gold": "public/customer_help.pdf page 2",
+    "found_in_top_5": true,
+    "cited": [
+     "public/customer_help.pdf page 2"
+    ],
+    "cited_right_page": true,
+    "answer": "Customers have 21 days to pay an invoice [public/customer_help.pdf#0001]."
+   },
+   {
+    "id": "pq03",
+    "gold": "engineering/oncall_handbook.pdf page 2",
+    "found_in_top_5": true,
+    "cited": [
+     "engineering/oncall_handbook.pdf page 2"
+    ],
+    "cited_right_page": true,
+    "answer": "An engineer must acknowledge a critical page within 5 minutes [engineering/oncall_handbook.pdf#0001]."
+   },
+   {
+    "id": "pq04",
+    "gold": "engineering/data_retention.pdf page 1",
+    "found_in_top_5": true,
+    "cited": [
+     "engineering/data_retention.pdf page 1"
+    ],
+    "cited_right_page": true,
+    "answer": "Application logs are kept for 45 days before they are deleted [engineering/data_retention.pdf#0000]."
+   },
+   {
+    "id": "pq05",
+    "gold": "finance/expense_rates.pdf page 1",
+    "found_in_top_5": true,
+    "cited": [
+     "finance/expense_rates.pdf page 1"
+    ],
+    "cited_right_page": true,
+    "answer": "0.46 euros per kilometre [finance/expense_rates.pdf#0000]."
+   },
+   {
+    "id": "pq06",
+    "gold": "finance/quarterly_close.pdf page 2",
+    "found_in_top_5": true,
+    "cited": [
+     "finance/quarterly_close.pdf page 2"
+    ],
+    "cited_right_page": true,
+    "answer": "Any difference above 250 euros must be investigated and explained in writing [finance/quarterly_close.pdf#0001]."
+   }
+  ],
+  "leak_examples_D": [],
+  "verdict": {
+   "pass_mark_1_isolation_zero_forbidden_chunks_and_zero_canaries": true,
+   "pass_mark_2_right_page_found_at_least_5_of_6": true,
+   "pass_mark_3_right_page_cited_at_least_5_of_6": true,
+   "control_A_leaks_so_the_test_can_see_leaks": true
+  }
+ },
+ "rows": [
+  {
+   "id": "pq01",
+   "type": "answerable",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "guest",
+   "attack_kind": null,
+   "context_chunks": [
+    "public/visitor_guide.pdf#0002",
+    "public/visitor_guide.pdf#0000"
+   ],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": true,
+   "model_seconds": 2.4139840999851003,
+   "total_seconds": 2.415069999988191,
+   "body_bytes": 182,
+   "found": true,
+   "answer": "The nearest railway station is a 12 minute walk from the Brightmoor office [public/visitor_guide.pdf#0002].",
+   "sources": [
+    "public/visitor_guide.pdf#0002"
+   ],
+   "invalid_citations": [],
+   "is_fixed_reply": false,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": {
+    "counts": {
+     "supported": 1,
+     "unsupported": 0,
+     "no_numbers": 0
+    },
+    "unsupported": []
+   }
+  },
+  {
+   "id": "pq02",
+   "type": "answerable",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "guest",
+   "attack_kind": null,
+   "context_chunks": [
+    "public/customer_help.pdf#0001"
+   ],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": true,
+   "model_seconds": 2.364381199993659,
+   "total_seconds": 2.3662522999802604,
+   "body_bytes": 148,
+   "found": true,
+   "answer": "Customers have 21 days to pay an invoice [public/customer_help.pdf#0001].",
+   "sources": [
+    "public/customer_help.pdf#0001"
+   ],
+   "invalid_citations": [],
+   "is_fixed_reply": false,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": {
+    "counts": {
+     "supported": 1,
+     "unsupported": 0,
+     "no_numbers": 0
+    },
+    "unsupported": []
+   }
+  },
+  {
+   "id": "pq03",
+   "type": "answerable",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "eng",
+   "attack_kind": null,
+   "context_chunks": [
+    "engineering/oncall_handbook.pdf#0001",
+    "engineering/oncall_handbook.pdf#0002"
+   ],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": true,
+   "model_seconds": 2.5464088000007905,
+   "total_seconds": 2.548183299950324,
+   "body_bytes": 183,
+   "found": true,
+   "answer": "An engineer must acknowledge a critical page within 5 minutes [engineering/oncall_handbook.pdf#0001].",
+   "sources": [
+    "engineering/oncall_handbook.pdf#0001"
+   ],
+   "invalid_citations": [],
+   "is_fixed_reply": false,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": {
+    "counts": {
+     "supported": 1,
+     "unsupported": 0,
+     "no_numbers": 0
+    },
+    "unsupported": []
+   }
+  },
+  {
+   "id": "pq04",
+   "type": "answerable",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "eng",
+   "attack_kind": null,
+   "context_chunks": [
+    "engineering/data_retention.pdf#0000",
+    "engineering/data_retention.pdf#0001"
+   ],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": true,
+   "model_seconds": 2.6030745999887586,
+   "total_seconds": 2.6054544000071473,
+   "body_bytes": 181,
+   "found": true,
+   "answer": "Application logs are kept for 45 days before they are deleted [engineering/data_retention.pdf#0000].",
+   "sources": [
+    "engineering/data_retention.pdf#0000"
+   ],
+   "invalid_citations": [],
+   "is_fixed_reply": false,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": {
+    "counts": {
+     "supported": 1,
+     "unsupported": 0,
+     "no_numbers": 0
+    },
+    "unsupported": []
+   }
+  },
+  {
+   "id": "pq05",
+   "type": "answerable",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "fin",
+   "attack_kind": null,
+   "context_chunks": [
+    "finance/expense_rates.pdf#0000"
+   ],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": true,
+   "model_seconds": 2.4547184000257403,
+   "total_seconds": 2.456343600002583,
+   "body_bytes": 134,
+   "found": true,
+   "answer": "0.46 euros per kilometre [finance/expense_rates.pdf#0000].",
+   "sources": [
+    "finance/expense_rates.pdf#0000"
+   ],
+   "invalid_citations": [],
+   "is_fixed_reply": false,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": {
+    "counts": {
+     "supported": 1,
+     "unsupported": 0,
+     "no_numbers": 0
+    },
+    "unsupported": []
+   }
+  },
+  {
+   "id": "pq06",
+   "type": "answerable",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "fin",
+   "attack_kind": null,
+   "context_chunks": [
+    "finance/quarterly_close.pdf#0001"
+   ],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": true,
+   "model_seconds": 2.570426399994176,
+   "total_seconds": 2.5721387999947183,
+   "body_bytes": 190,
+   "found": true,
+   "answer": "Any difference above 250 euros must be investigated and explained in writing [finance/quarterly_close.pdf#0001].",
+   "sources": [
+    "finance/quarterly_close.pdf#0001"
+   ],
+   "invalid_citations": [],
+   "is_fixed_reply": false,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": {
+    "counts": {
+     "supported": 1,
+     "unsupported": 0,
+     "no_numbers": 0
+    },
+    "unsupported": []
+   }
+  },
+  {
+   "id": "pq07",
+   "type": "cross_group",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "guest",
+   "attack_kind": null,
+   "context_chunks": [],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": false,
+   "model_seconds": null,
+   "total_seconds": 0.0020035000052303076,
+   "body_bytes": 104,
+   "found": false,
+   "answer": "I could not find an answer in the documents you can access.",
+   "sources": [],
+   "invalid_citations": [],
+   "is_fixed_reply": true,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": null
+  },
+  {
+   "id": "pq08",
+   "type": "cross_group",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "guest",
+   "attack_kind": null,
+   "context_chunks": [],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": false,
+   "model_seconds": null,
+   "total_seconds": 0.00115280004683882,
+   "body_bytes": 104,
+   "found": false,
+   "answer": "I could not find an answer in the documents you can access.",
+   "sources": [],
+   "invalid_citations": [],
+   "is_fixed_reply": true,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": null
+  },
+  {
+   "id": "pq09",
+   "type": "cross_group",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "eng",
+   "attack_kind": null,
+   "context_chunks": [
+    "public/customer_help.pdf#0001"
+   ],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": true,
+   "model_seconds": 2.548522600030992,
+   "total_seconds": 2.549735000007786,
+   "body_bytes": 104,
+   "found": false,
+   "answer": "I could not find an answer in the documents you can access.",
+   "sources": [],
+   "invalid_citations": [],
+   "is_fixed_reply": true,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": null
+  },
+  {
+   "id": "pq10",
+   "type": "cross_group",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "fin",
+   "attack_kind": null,
+   "context_chunks": [],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": false,
+   "model_seconds": null,
+   "total_seconds": 0.0018085999763570726,
+   "body_bytes": 104,
+   "found": false,
+   "answer": "I could not find an answer in the documents you can access.",
+   "sources": [],
+   "invalid_citations": [],
+   "is_fixed_reply": true,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": null
+  },
+  {
+   "id": "pq11",
+   "type": "negative",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "eng",
+   "attack_kind": null,
+   "context_chunks": [],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": false,
+   "model_seconds": null,
+   "total_seconds": 0.001090100035071373,
+   "body_bytes": 104,
+   "found": false,
+   "answer": "I could not find an answer in the documents you can access.",
+   "sources": [],
+   "invalid_citations": [],
+   "is_fixed_reply": true,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": null
+  },
+  {
+   "id": "pq12",
+   "type": "negative",
+   "split": "pdf",
+   "cond": "D",
+   "delimit": true,
+   "kind": "main",
+   "user": "guest",
+   "attack_kind": null,
+   "context_chunks": [],
+   "context_leak": false,
+   "canary_leaks": [],
+   "called_model": false,
+   "model_seconds": null,
+   "total_seconds": 0.0009584999643266201,
+   "body_bytes": 104,
+   "found": false,
+   "answer": "I could not find an answer in the documents you can access.",
+   "sources": [],
+   "invalid_citations": [],
+   "is_fixed_reply": true,
+   "cites_gold": false,
+   "marker_in_answer": false,
+   "reveal_in_answer": false,
+   "adopted": false,
+   "poison_doc_in_context": false,
+   "number_support": null
+  }
+ ],
+ "meta": {
+  "date": "2026-11-04T19:54:22+05:30",
+  "commit": "cbb1bc6623b70f8025d6480ea6a4269d744c18ac",
+  "working_tree_dirty": false,
+  "python": "3.11.9",
+  "os": "Windows-10-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "cpu_threads": 22,
+  "ram_gb": 15.4,
+  "gpu": "not used (ONNX Runtime on CPU)",
+  "packages": {
+   "chromadb": "1.5.9",
+   "onnxruntime": "1.31.1",
+   "pypdf": "6.21.4",
+   "PyYAML": "6.0.3"
+  },
+  "embedding_model": "chroma default all-MiniLM-L6-v2 (ONNX)",
+  "bootstrap": "10000 resamples, seed 0"
+ }
+}
