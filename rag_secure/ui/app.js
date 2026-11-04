@@ -32,6 +32,9 @@ function stage(name, sub, head) {
   img.alt = `${dog === "ginger" ? "Ginger" : "Simba"}, ${pose}`;
   $("#say").textContent = head || say;
   $("#sub").textContent = sub === undefined ? subtitle : sub;
+  const card = $(".stage");
+  card.classList.toggle("busy", name === "looking" || name === "sniff");
+  for (const el of [$("#say"), $("#sub")]) { el.classList.remove("fade"); void el.offsetWidth; el.classList.add("fade"); }
 }
 
 async function call(path, opts = {}) {
@@ -191,15 +194,17 @@ async function ask(e) {
   const q = $("#question").value.trim();
   if (!q) { $("#question").focus(); return; }
   $("#go").disabled = true;
+  $("#go").textContent = "Looking…";
   stage("looking");
   const stopTimer = loading();
   let r;
   try {
     r = await call("/ask", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: q, explain: $("#explain").checked }) });
+      body: JSON.stringify({ question: q, explain: true }) });
   } catch { r = { status: 0 }; }
   stopTimer();
   $("#go").disabled = false;
+  $("#go").textContent = "Ask Ginger";
   if (r.status === 200) {
     render(r.body);
     stage(r.body.found ? "answered" : "locked");
@@ -231,11 +236,13 @@ async function upload() {
   if (!file) return;
   const note = $("#upload-note");
   note.hidden = true;
+  $("#progress").hidden = false;
   stage("sniff");
   let r;
   try {
     r = await call("/upload", { method: "POST", headers: { "X-Filename": file.name }, body: file });
   } catch { r = { status: 400 }; }
+  $("#progress").hidden = true;
   if (r.status === 200) {
     files.push(file.name);
     listFile(file.name, r.body);

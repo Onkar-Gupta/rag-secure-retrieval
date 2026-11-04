@@ -60,7 +60,6 @@
         <textarea id="question" rows="3" maxlength="500" placeholder="Ask about a file on your shelf"></textarea>
         <div class="row">
           <button class="btn primary" id="go" type="submit">Ask Ginger</button>
-          <label class="check"><input type="checkbox" id="explain"> Show Ginger's working</label>
         </div>
       </form>
 
@@ -73,6 +72,7 @@
       <div id="upload" hidden>
         <input id="file" type="file" accept=".pdf,.md,.txt" hidden>
         <button class="btn secondary" id="pick" type="button">Add a file</button>
+        <div id="progress" class="progress" hidden><i></i></div>
         <p class="hint" id="limits"></p>
         <ul id="files" class="files"></ul>
         <p id="upload-note" class="problem" role="alert" hidden></p>
