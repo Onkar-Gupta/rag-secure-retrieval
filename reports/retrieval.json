@@ -1,0 +1,394 @@
+{
+ "stage": "retrieval",
+ "settings": {
+  "chunk_size": 300,
+  "chunk_overlap": 100,
+  "top_k": 5,
+  "relevance_threshold": 0.6079088449478149
+ },
+ "leaks": {
+  "A": {
+   "runs": 480,
+   "runs_with_leak": 240,
+   "leaked_chunks": 810,
+   "leak_rate": {
+    "k": 240,
+    "n": 480,
+    "rate": 0.5,
+    "wilson95": [
+     0.45544725440867795,
+     0.544552745591322
+    ]
+   },
+   "examples": [
+    "q001 as guest",
+    "q002 as guest",
+    "q005 as guest",
+    "q006 as guest",
+    "q008 as guest"
+   ]
+  },
+  "C": {
+   "runs": 480,
+   "runs_with_leak": 0,
+   "leaked_chunks": 0,
+   "leak_rate": {
+    "k": 0,
+    "n": 480,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.00793978855890027
+    ],
+    "rule_of_three_upper95": 0.00625
+   },
+   "examples": []
+  },
+  "D": {
+   "runs": 480,
+   "runs_with_leak": 0,
+   "leaked_chunks": 0,
+   "leak_rate": {
+    "k": 0,
+    "n": 480,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.00793978855890027
+    ],
+    "rule_of_three_upper95": 0.00625
+   },
+   "examples": []
+  }
+ },
+ "hit_rate_at_5": {
+  "A": {
+   "dev": {
+    "k": 19,
+    "n": 20,
+    "rate": 0.95,
+    "wilson95": [
+     0.7638641064874331,
+     0.9911187805671268
+    ]
+   },
+   "test": {
+    "k": 39,
+    "n": 40,
+    "rate": 0.975,
+    "wilson95": [
+     0.8711834051199223,
+     0.9955732825922052
+    ]
+   }
+  },
+  "C": {
+   "dev": {
+    "k": 19,
+    "n": 20,
+    "rate": 0.95,
+    "wilson95": [
+     0.7638641064874331,
+     0.9911187805671268
+    ]
+   },
+   "test": {
+    "k": 39,
+    "n": 40,
+    "rate": 0.975,
+    "wilson95": [
+     0.8711834051199223,
+     0.9955732825922052
+    ]
+   }
+  },
+  "D": {
+   "dev": {
+    "k": 19,
+    "n": 20,
+    "rate": 0.95,
+    "wilson95": [
+     0.7638641064874331,
+     0.9911187805671268
+    ]
+   },
+   "test": {
+    "k": 39,
+    "n": 40,
+    "rate": 0.975,
+    "wilson95": [
+     0.8711834051199223,
+     0.9955732825922052
+    ]
+   }
+  }
+ },
+ "paired_bootstrap_D_minus_C": {
+  "dev": {
+   "mean_diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "resamples": 10000,
+   "seed": 0,
+   "n": 20
+  },
+  "test": {
+   "mean_diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "resamples": 10000,
+   "seed": 0,
+   "n": 40
+  }
+ },
+ "threshold_behaviour_context_only": {
+  "answerable_dev": {
+   "n": 20,
+   "top1_inside_cutoff": 20,
+   "share_with_no_chunk_inside_cutoff": 0.0
+  },
+  "answerable_test": {
+   "n": 40,
+   "top1_inside_cutoff": 37,
+   "share_with_no_chunk_inside_cutoff": 0.075
+  },
+  "negative_dev": {
+   "n": 5,
+   "top1_inside_cutoff": 2,
+   "share_with_no_chunk_inside_cutoff": 0.6
+  },
+  "negative_test": {
+   "n": 10,
+   "top1_inside_cutoff": 5,
+   "share_with_no_chunk_inside_cutoff": 0.5
+  },
+  "cross_group_dev": {
+   "n": 10,
+   "top1_inside_cutoff": 1,
+   "share_with_no_chunk_inside_cutoff": 0.9
+  },
+  "cross_group_test": {
+   "n": 20,
+   "top1_inside_cutoff": 8,
+   "share_with_no_chunk_inside_cutoff": 0.6
+  }
+ },
+ "gold_chunks": {
+  "q001": [
+   "public/code_of_conduct.md#0000"
+  ],
+  "q002": [
+   "public/code_of_conduct.md#0001"
+  ],
+  "q003": [
+   "public/company_overview.md#0000"
+  ],
+  "q004": [
+   "public/company_overview.md#0001"
+  ],
+  "q005": [
+   "public/holiday_policy.md#0000"
+  ],
+  "q006": [
+   "public/holiday_policy.md#0001"
+  ],
+  "q007": [
+   "public/office_locations.md#0000"
+  ],
+  "q008": [
+   "public/office_locations.md#0001"
+  ],
+  "q009": [
+   "public/onboarding_guide.md#0000"
+  ],
+  "q010": [
+   "public/onboarding_guide.md#0001"
+  ],
+  "q011": [
+   "public/press_kit.md#0000"
+  ],
+  "q012": [
+   "public/press_kit.md#0001"
+  ],
+  "q013": [
+   "public/product_pricing.md#0000"
+  ],
+  "q014": [
+   "public/product_pricing.md#0001"
+  ],
+  "q015": [
+   "public/remote_work_policy.md#0000"
+  ],
+  "q016": [
+   "public/remote_work_policy.md#0001"
+  ],
+  "q017": [
+   "public/security_awareness.md#0000"
+  ],
+  "q018": [
+   "public/security_awareness.md#0001"
+  ],
+  "q019": [
+   "public/support_hours.md#0000"
+  ],
+  "q020": [
+   "public/support_hours.md#0001"
+  ],
+  "q021": [
+   "engineering/api_rate_limits.md#0000"
+  ],
+  "q022": [
+   "engineering/api_rate_limits.md#0000",
+   "engineering/api_rate_limits.md#0001"
+  ],
+  "q023": [
+   "engineering/architecture_overview.md#0000"
+  ],
+  "q024": [
+   "engineering/architecture_overview.md#0001"
+  ],
+  "q025": [
+   "engineering/database_standards.md#0000"
+  ],
+  "q026": [
+   "engineering/database_standards.md#0001"
+  ],
+  "q027": [
+   "engineering/deploy_runbook.md#0000"
+  ],
+  "q028": [
+   "engineering/deploy_runbook.md#0001"
+  ],
+  "q029": [
+   "engineering/incident_response.md#0000"
+  ],
+  "q030": [
+   "engineering/incident_response.md#0001"
+  ],
+  "q031": [
+   "engineering/internal_faq.md#0000"
+  ],
+  "q032": [
+   "engineering/internal_faq.md#0001"
+  ],
+  "q033": [
+   "engineering/logging_guide.md#0000"
+  ],
+  "q034": [
+   "engineering/logging_guide.md#0000",
+   "engineering/logging_guide.md#0001"
+  ],
+  "q035": [
+   "engineering/oncall_rota.md#0000"
+  ],
+  "q036": [
+   "engineering/oncall_rota.md#0000"
+  ],
+  "q037": [
+   "engineering/release_checklist.md#0000"
+  ],
+  "q038": [
+   "engineering/release_checklist.md#0001"
+  ],
+  "q039": [
+   "engineering/vendor_integration_notes.md#0000"
+  ],
+  "q040": [
+   "engineering/vendor_integration_notes.md#0001"
+  ],
+  "q041": [
+   "finance/audit_notes.md#0000"
+  ],
+  "q042": [
+   "finance/audit_notes.md#0001"
+  ],
+  "q043": [
+   "finance/budget_2026.md#0000"
+  ],
+  "q044": [
+   "finance/budget_2026.md#0000",
+   "finance/budget_2026.md#0001"
+  ],
+  "q045": [
+   "finance/expense_policy.md#0000"
+  ],
+  "q046": [
+   "finance/expense_policy.md#0000"
+  ],
+  "q047": [
+   "finance/payroll_calendar.md#0000"
+  ],
+  "q048": [
+   "finance/payroll_calendar.md#0001"
+  ],
+  "q049": [
+   "finance/pricing_internal.md#0000"
+  ],
+  "q050": [
+   "finance/pricing_internal.md#0000",
+   "finance/pricing_internal.md#0001"
+  ],
+  "q051": [
+   "finance/procurement_rules.md#0000"
+  ],
+  "q052": [
+   "finance/procurement_rules.md#0000"
+  ],
+  "q053": [
+   "finance/revenue_forecast.md#0000"
+  ],
+  "q054": [
+   "finance/revenue_forecast.md#0000",
+   "finance/revenue_forecast.md#0001"
+  ],
+  "q055": [
+   "finance/tax_filing_calendar.md#0000"
+  ],
+  "q056": [
+   "finance/tax_filing_calendar.md#0000"
+  ],
+  "q057": [
+   "finance/travel_budget.md#0000"
+  ],
+  "q058": [
+   "finance/travel_budget.md#0001"
+  ],
+  "q059": [
+   "finance/vendor_contracts.md#0000"
+  ],
+  "q060": [
+   "finance/vendor_contracts.md#0001"
+  ]
+ },
+ "verdict": {
+  "pass_mark_1_context_leaks_D_zero": true,
+  "pass_mark_1_note": "context leaks only; canary leaks are checked at the generation stage",
+  "pass_mark_2_hit_rate_D_at_least_C_on_test": true,
+  "pass_mark_2_hit_rate_D_at_least_0.80_on_test": true,
+  "control_A_leaks_so_the_test_can_see_leaks": true,
+  "control_C_zero_leaks": true
+ },
+ "meta": {
+  "date": "2026-11-04T16:49:10+05:30",
+  "commit": "68cd0b7df0732ffe04632bdd794d62d0d3bc3217",
+  "working_tree_dirty": false,
+  "python": "3.11.9",
+  "os": "Windows-10-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "cpu_threads": 22,
+  "ram_gb": 15.4,
+  "gpu": "not used (ONNX Runtime on CPU)",
+  "packages": {
+   "chromadb": "1.5.9",
+   "onnxruntime": "1.31.1",
+   "pypdf": "6.21.4",
+   "PyYAML": "6.0.3"
+  },
+  "embedding_model": "chroma default all-MiniLM-L6-v2 (ONNX)",
+  "bootstrap": "10000 resamples, seed 0"
+ }
+}
