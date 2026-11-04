@@ -7,6 +7,6 @@ db_path: rag.sqlite
 chunk_size: 500
 chunk_overlap: 100
 
-# Filled in as each step is built.
-top_k: TBC
+# Retrieval. top_k is fixed by the protocol; the threshold is chosen on the dev split in step 4.
+top_k: 5
 relevance_threshold: TBC

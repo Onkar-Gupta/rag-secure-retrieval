@@ -2,7 +2,7 @@
 
 Local RAG with per-document access groups and a measured leakage test.
 
-> Work in progress. Nothing is built yet. Results: TBC.
+> Work in progress. Built so far: document ingestion and group-filtered retrieval, with a pre-registered evaluation protocol. Answering, the API and the measured results are not built yet (TBC).
 
 ## Quick Start
 
