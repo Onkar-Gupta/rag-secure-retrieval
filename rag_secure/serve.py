@@ -3,13 +3,14 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from rag_secure import db, demo, generator, ingest, security
+from rag_secure import db, demo, generator, ingest, security, source
 
 
 class AskRequest(BaseModel):
@@ -79,6 +80,40 @@ def create_app(cfg, users, col, llm, embedding_function=None):
     @app.get("/health")
     def health():
         return {"status": "ok"}
+
+    def readable(conn, doc_id, groups):
+        """True only for an indexed, non-quarantined document in one of the caller's groups."""
+        row = conn.execute("SELECT grp, quarantined FROM documents WHERE doc_id=?", (doc_id,)).fetchone()
+        return bool(row) and row[0] in groups and not row[1]
+
+    @app.get("/source")
+    def cited_source(chunk: str, user: Annotated[tuple, Depends(current_user)]):
+        """The passage a citation points at, in its page. Same 404 for a missing and a forbidden chunk."""
+        conn = db.connect(cfg["db_path"])
+        try:
+            found = source.context(conn, chunk, cfg["chunk_size"], cfg["chunk_overlap"])
+            if found is None or not readable(conn, found["doc_id"], user[1]):
+                raise HTTPException(status_code=404, detail="not found")
+            return {**found, "kind": "pdf" if found["doc_id"].lower().endswith(".pdf") else "text"}
+        finally:
+            conn.close()
+
+    @app.get("/file")
+    def original_file(doc: str, user: Annotated[tuple, Depends(current_user)]):
+        """The original file of a document the caller may read. Only indexed documents are served."""
+        conn = db.connect(cfg["db_path"])
+        try:
+            ok = readable(conn, doc, user[1])
+        finally:
+            conn.close()
+        root = Path(cfg["docs_dir"]).resolve()
+        path = (root / doc).resolve()
+        if not ok or not path.is_relative_to(root) or not path.is_file():
+            raise HTTPException(status_code=404, detail="not found")
+        media = "application/pdf" if path.suffix.lower() == ".pdf" else "text/plain; charset=utf-8"
+        return Response(path.read_bytes(), media_type=media,
+                        headers={"Content-Disposition": f"inline; filename*=UTF-8''{quote(path.name)}",
+                                 "X-Content-Type-Options": "nosniff"})
 
     @app.post("/ask")
     def ask(req: AskRequest, user: Annotated[tuple, Depends(current_user)]):
