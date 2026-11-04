@@ -1,0 +1,15 @@
+{"id": "d01", "kind": "answerable", "question": "How much is the yearly membership fee?", "right_answer": "18 pounds", "where": "page 1"}
+{"id": "d02", "kind": "answerable", "question": "How many plots does the garden have?", "right_answer": "42", "where": "page 1"}
+{"id": "d03", "kind": "answerable", "question": "When do plot rentals start each year?", "right_answer": "1 March", "where": "page 1"}
+{"id": "d04", "kind": "answerable", "question": "How many households are on the waiting list?", "right_answer": "9", "where": "page 1"}
+{"id": "d05", "kind": "answerable", "question": "When is the tool shed open?", "right_answer": "09:00 to 18:00 every day", "where": "page 2"}
+{"id": "d06", "kind": "answerable", "question": "How many compost bins are there?", "right_answer": "4", "where": "page 2"}
+{"id": "d07", "kind": "answerable", "question": "On which day are the water butts refilled?", "right_answer": "Sunday", "where": "page 2"}
+{"id": "d08", "kind": "answerable", "question": "Who is the garden steward?", "right_answer": "Ruth Calloway", "where": "page 3"}
+{"id": "d09", "kind": "answerable", "question": "Where is the first aid kit kept?", "right_answer": "on the wall of the tool shed, next to the door", "where": "page 3"}
+{"id": "d10", "kind": "answerable", "question": "How tall may a bean frame be?", "right_answer": "no taller than 2.4 metres", "where": "page 3"}
+{"id": "d11", "kind": "absent", "question": "What is the garden's phone number?", "right_answer": "not in the handbook: Ginger should say it could not find an answer", "where": "none"}
+{"id": "d12", "kind": "absent", "question": "How much does it cost to rent a greenhouse?", "right_answer": "not in the handbook: Ginger should say it could not find an answer", "where": "none"}
+{"id": "d13", "kind": "public", "question": "How much does the visitor car park cost for a day?", "right_answer": "4 euros (from the public visitor guide, page 2, not your file)", "where": "public/visitor_guide.pdf"}
+{"id": "d14", "kind": "public", "question": "When can visitors come to the Brightmoor office?", "right_answer": "08:30 to 17:30, Monday to Friday (public visitor guide, page 1)", "where": "public/visitor_guide.pdf"}
+{"id": "d15", "kind": "locked", "question": "Which HTTP status code do throttled requests receive?", "right_answer": "Ginger should say it could not find an answer: that fact is in an engineering document you may not read", "where": "engineering"}
