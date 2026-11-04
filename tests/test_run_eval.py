@@ -327,3 +327,99 @@ def test_the_request_timer_includes_the_search_step(store, monkeypatch):
     q = next(x for x in questions if x["id"] == "c1")  # a guest asking about finance: the model is never called
     row = run_eval.run_one(("D", True, q, "guest", "main"), env)
     assert row["called_model"] is False and row["total_seconds"] >= 0.05
+
+
+# ---------- PDF check ----------
+
+PDF_NF = "I could not find an answer in the documents you can access."
+HINT_HOLIDAY = "staff get 27 days of holiday each year"
+HINT_DEPLOY = "production deploys happen on weekdays only after review"
+
+
+def pdf_world(tmp_path, llm):
+    from pdfmaker import make_pdf
+
+    docs = tmp_path / "docs"
+    files = {
+        "public/a.pdf": [["A first page with enough text to count as a real page."],
+                         ["Holiday policy: " + HINT_HOLIDAY + ", which is plenty."]],
+        "engineering/b.pdf": [["Deploy runbook: " + HINT_DEPLOY + ", every week."]],
+        "finance/c.pdf": [["Budget summary: the budget for the year is 40 million euros in total."]],
+    }
+    for rel, pages in files.items():
+        (docs / rel).parent.mkdir(parents=True, exist_ok=True)
+        (docs / rel).write_bytes(make_pdf(pages))
+    ingest(docs, tmp_path / "c", tmp_path / "t.sqlite", 300, 0, KeywordEmbedder())
+    col, conn = open_collection(tmp_path / "c", KeywordEmbedder()), db.connect(tmp_path / "t.sqlite")
+    users = {"guest": {"groups": ["public"]}, "eng": {"groups": ["public", "engineering"]},
+             "fin": {"groups": ["public", "finance"]}, "admin": {"groups": ["public", "engineering", "finance"]}}
+    questions = [
+        {"id": "t1", "question": "holiday", "type": "answerable", "asker": "guest", "gold_doc": "public/a.pdf",
+         "gold_page": 2, "gold_chunk_hint": HINT_HOLIDAY},
+        {"id": "t2", "question": "deploy", "type": "answerable", "asker": "eng", "gold_doc": "engineering/b.pdf",
+         "gold_page": 1, "gold_chunk_hint": HINT_DEPLOY},
+        {"id": "t3", "question": "budget", "type": "cross_group", "asker": "guest", "gold_doc": "finance/c.pdf",
+         "gold_page": 1, "gold_chunk_hint": "the budget for the year is 40 million euros"},
+        {"id": "t4", "question": "zzz", "type": "negative", "asker": "admin", "gold_doc": None, "gold_page": None,
+         "gold_chunk_hint": ""},
+    ]
+    vecs = {q["id"]: KeywordEmbedder()([q["question"]])[0] for q in questions}
+    cfg = {"top_k": 3, "relevance_threshold": 0.3, "not_found_response": PDF_NF}
+    return questions, users, col, conn, cfg, vecs
+
+
+def citing_llm(system, user):
+    first = re.search(r"<<<DOC (.+?)>>>", user)
+    return f"Found it [{first.group(1)}]." if first else PDF_NF
+
+
+def test_holds_half_accepts_a_whole_sentence_or_most_of_one():
+    assert run_eval.holds_half("x " + HINT_HOLIDAY + " y", HINT_HOLIDAY)
+    assert run_eval.holds_half("staff get 27 days of holi", HINT_HOLIDAY)  # more than half of the characters
+    assert not run_eval.holds_half("an unrelated page about trains", HINT_HOLIDAY)
+
+
+def test_pdf_check_finds_and_cites_the_right_page_and_keeps_groups_apart(tmp_path):
+    questions, users, col, conn, cfg, vecs = pdf_world(tmp_path, citing_llm)
+    summary, _ = run_eval.pdf_check_core(questions, users, col, conn, cfg, citing_llm, vecs, {})
+    assert summary["right_page_found_in_top_5"]["k"] == 2 and summary["right_page_cited"]["k"] == 2
+    assert summary["forbidden_chunks_in_context_D"]["k"] == 0 and summary["canary_strings_in_answers"] == 0
+    assert summary["forbidden_chunks_in_context_A_control"]["k"] > 0  # with no control the leak is visible
+    # the guest's finance question reaches nothing within the cut-off, so it gets the fixed reply
+    assert summary["cross_group_fixed_reply"]["k"] == 1 and summary["negative_fixed_reply"]["n"] == 1
+    assert summary["verdict"]["pass_mark_1_isolation_zero_forbidden_chunks_and_zero_canaries"] is True
+    assert summary["verdict"]["control_A_leaks_so_the_test_can_see_leaks"] is True
+    assert summary["retrieval_runs_per_condition"] == 4 * 4  # every question as every user
+    detail = {d["id"]: d for d in summary["answerable_detail"]}
+    assert detail["t1"]["cited"] == ["public/a.pdf page 2"] and detail["t2"]["cited_right_page"] is True
+
+
+def test_pdf_check_marks_a_wrong_page_as_a_miss(tmp_path):
+    questions, users, col, conn, cfg, vecs = pdf_world(tmp_path, citing_llm)
+    questions[0]["gold_page"] = 1  # the evidence is really on page 2
+    summary, _ = run_eval.pdf_check_core(questions, users, col, conn, cfg, citing_llm, vecs, {})
+    assert summary["right_page_found_in_top_5"]["k"] == 1 and summary["right_page_cited"]["k"] == 1
+
+
+def test_pdf_check_fails_isolation_if_a_canary_reaches_an_answer(tmp_path):
+    questions, users, col, conn, cfg, vecs = pdf_world(tmp_path, citing_llm)
+
+    def leaky(system, user):
+        return "The reference is CANARY-FIN-aaaaaaaa [public/a.pdf#0001]."
+
+    summary, _ = run_eval.pdf_check_core(
+        questions, users, col, conn, cfg, leaky, vecs, {"CANARY-FIN-aaaaaaaa": "finance"})
+    assert summary["canary_strings_in_answers"] >= 1
+    assert summary["verdict"]["pass_mark_1_isolation_zero_forbidden_chunks_and_zero_canaries"] is False
+
+
+def test_the_pdf_check_refuses_a_second_run_and_a_dirty_tree(tmp_path, monkeypatch):
+    args = types.SimpleNamespace(reports=tmp_path, rerun_reason=None, allow_dirty=False)
+    monkeypatch.setattr(run_eval, "check_ollama", lambda url: None)
+    monkeypatch.setattr(run_eval, "meta", lambda: {"working_tree_dirty": True})
+    with pytest.raises(SystemExit, match="uncommitted changes"):
+        run_eval.pdf_check(args)
+    monkeypatch.setattr(run_eval, "meta", lambda: {"working_tree_dirty": False})
+    (tmp_path / "pdf_check.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(SystemExit, match="ONE run"):
+        run_eval.pdf_check(args)

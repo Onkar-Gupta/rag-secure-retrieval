@@ -13,6 +13,7 @@ import argparse
 import ctypes
 import datetime
 import importlib.metadata as md
+import importlib.util
 import json
 import math
 import platform
@@ -829,6 +830,118 @@ def generation(args):
     print(json.dumps(result["summary"]["verdict"], indent=1))
 
 
+# ---------- PDF check: a separate mini-test, run once (protocol Amendment "PDF check") ----------
+#
+#   python eval/run_eval.py --stage pdf-check
+#
+# A different corpus (data/docs_pdf) with its own index, so no main-set number can change.
+
+def holds_half(text, hint):
+    """True if the chunk holds the whole evidence sentence, or at least half of its characters in one piece."""
+    if hint in text:
+        return True
+    return SequenceMatcher(None, text, hint, autojunk=False).find_longest_match(0, len(text), 0, len(hint)).size >= len(hint) / 2
+
+
+def pdf_check_core(questions, users, col, conn, cfg, llm, vecs, cmap):
+    """Pure function: runs the PDF check on a ready index and returns the result (no files, no guards)."""
+    page_of = dict(conn.execute("SELECT chunk_id, page FROM chunks"))
+    doc_of = dict(conn.execute("SELECT chunk_id, doc_id FROM chunks"))
+    runs = {"D": 0, "A": 0}
+    leaks = {"D": [], "A": []}
+    for q in questions:  # retrieval part: every question as every user, no model
+        for name, user in users.items():
+            for cond in ("D", "A"):
+                used = context_for(cond, col, conn, q["question"], user["groups"], vecs[q["id"]], cfg)
+                runs[cond] += 1
+                bad = [h["chunk_id"] for h in used if folder(h["doc_id"]) not in user["groups"]]
+                if bad:
+                    leaks[cond].append(f"{q['id']} as {name}")
+    env = {"cfg": cfg, "users": users, "vecs": vecs, "cmap": cmap, "cdoc": {}, "col": col, "conn": conn,
+           "gold": {}, "timed": TimedLLM(llm)}
+    rows = {q["id"]: run_one(("D", True, dict(q, split="pdf"), q["asker"], "main"), env) for q in questions}
+    found, cited, detail = 0, 0, []
+    answerable = [q for q in questions if q["type"] == "answerable"]
+    for q in answerable:
+        top = retrieve(col, conn, q["question"], users[q["asker"]]["groups"], k=cfg["top_k"], embedding=vecs[q["id"]])
+        hit = any(h["doc_id"] == q["gold_doc"] and h["page"] == q["gold_page"] and holds_half(h["text"], q["gold_chunk_hint"])
+                  for h in top)
+        row = rows[q["id"]]
+        right_page = any(doc_of.get(s) == q["gold_doc"] and page_of.get(s) == q["gold_page"] for s in row["sources"])
+        found, cited = found + hit, cited + right_page
+        detail.append({"id": q["id"], "gold": f"{q['gold_doc']} page {q['gold_page']}", "found_in_top_5": hit,
+                       "cited": [f"{doc_of.get(s)} page {page_of.get(s)}" for s in row["sources"]],
+                       "cited_right_page": right_page, "answer": row["answer"]})
+    cross = [rows[q["id"]] for q in questions if q["type"] == "cross_group"]
+    neg = [rows[q["id"]] for q in questions if q["type"] == "negative"]
+    canary_leaks = sum(len(r["canary_leaks"]) for r in rows.values())
+    summary = {
+        "retrieval_runs_per_condition": runs["D"],
+        "forbidden_chunks_in_context_D": rate(len(leaks["D"]), runs["D"]),
+        "forbidden_chunks_in_context_A_control": rate(len(leaks["A"]), runs["A"]),
+        "canary_strings_in_answers": canary_leaks,
+        "right_page_found_in_top_5": rate(found, len(answerable)),
+        "right_page_cited": rate(cited, len(answerable)),
+        "cross_group_fixed_reply": rate(sum(r["is_fixed_reply"] for r in cross), len(cross)),
+        "negative_fixed_reply": rate(sum(r["is_fixed_reply"] for r in neg), len(neg)),
+        "latency_seconds": latency_block(list(rows.values())),
+        "number_support": number_support_rate([rows[q["id"]] for q in answerable]),
+        "answerable_detail": detail, "leak_examples_D": leaks["D"],
+    }
+    summary["verdict"] = {
+        "pass_mark_1_isolation_zero_forbidden_chunks_and_zero_canaries": not leaks["D"] and canary_leaks == 0,
+        "pass_mark_2_right_page_found_at_least_5_of_6": found >= 5,
+        "pass_mark_3_right_page_cited_at_least_5_of_6": cited >= 5,
+        "control_A_leaks_so_the_test_can_see_leaks": bool(leaks["A"]),
+    }
+    return summary, list(rows.values())
+
+
+def pdf_canary_folders(root):
+    """{canary: folder} read from the PDFs themselves."""
+    spec = importlib.util.spec_from_file_location("check_pdf_data", root / "eval" / "check_pdf_data.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    errors, pages, questions = module.check(root)
+    if errors:
+        raise SystemExit("The PDF data fails its own checks: " + "; ".join(errors))
+    cmap = {c: doc.split("/")[0] for doc, ps in pages.items() for _, text in ps for c in CANARY.findall(text)}
+    return cmap, questions
+
+
+def pdf_check(args):
+    s = frozen_settings()
+    cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
+    check_ollama(cfg["ollama_url"])
+    info = meta()
+    if info["working_tree_dirty"] and not args.allow_dirty:
+        raise SystemExit("The working tree has uncommitted changes. Commit them first so the report records an "
+                         "exact commit (use --allow-dirty only for a practice run).")
+    target = args.reports / "pdf_check.json"
+    if target.exists():
+        if not args.rerun_reason:
+            raise SystemExit(f"{target} already exists. The Amendment allows ONE run. If a rerun is really needed, "
+                             "pass --rerun-reason \"why\"; every run is kept.")
+        target = args.reports / f"pdf_check_run{len(list(args.reports.glob('pdf_check_run*.json'))) + 2}.json"
+    cmap, questions = pdf_canary_folders(ROOT)
+    users, vecs = load_users(), embed_questions(questions)
+    llm = generator.ollama_llm(cfg["model"], cfg["ollama_url"], cfg["temperature"], cfg["seed"], cfg["max_tokens"])
+    print(f"[pdf-check] {len(questions)} questions, 4 users; target {target.name}", flush=True)
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        counts = ingest(ROOT / "data" / "docs_pdf", Path(tmp) / "c", Path(tmp) / "t.sqlite", s["chunk_size"],
+                        s["chunk_overlap"], min_page_chars=cfg.get("min_page_chars", 20))
+        col, conn = open_collection(Path(tmp) / "c"), db.connect(Path(tmp) / "t.sqlite")
+        print(f"[pdf-check] indexed {counts['added']} PDFs, {counts['chunks']} chunks; pages without text: "
+              f"{counts['pages_without_text']}", flush=True)
+        llm(f"Reply with the single word OK.", "Say OK.")  # noqa: F541  (load the model before timing anything)
+        summary, rows = pdf_check_core(questions, users, col, conn, cfg, llm, vecs, cmap)
+    result = {"stage": "pdf-check", "rerun_reason": args.rerun_reason, "model": cfg["model"], "settings": s,
+              "pages_without_text": counts["pages_without_text"], "chunks": counts["chunks"],
+              "summary": summary, "rows": rows, "meta": info}
+    write(target, result)
+    print(json.dumps(summary["verdict"], indent=1))
+
+
 # ---------- report plumbing ----------
 
 def ram_gb():
@@ -865,7 +978,7 @@ def write(path, obj):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", choices=["tune", "retrieval", "model-dev", "number-check", "generation"], required=True)
+    ap.add_argument("--stage", choices=["tune", "retrieval", "model-dev", "number-check", "generation", "pdf-check"], required=True)
     ap.add_argument("--reports", type=Path, default=ROOT / "reports")
     ap.add_argument("--smoke", action="store_true", help="generation: rehearsal on dev questions only")
     ap.add_argument("--smoke-n", type=int, default=15, help="generation --smoke: how many dev questions")
@@ -873,7 +986,7 @@ def main():
     ap.add_argument("--allow-dirty", action="store_true", help="generation: practice run with uncommitted changes")
     args = ap.parse_args()
     {"tune": tune, "retrieval": retrieval, "model-dev": model_dev,
-     "number-check": number_check_selftest, "generation": generation}[args.stage](args)
+     "number-check": number_check_selftest, "generation": generation, "pdf-check": pdf_check}[args.stage](args)
 
 
 if __name__ == "__main__":
