@@ -246,6 +246,8 @@ Dated entries only. Each entry says what changed, why, and whether any result ex
 
 *Clarification of acceptance rule (2), written before the padded run.* "Later than the floor" is measured from outside the function, which includes a few microseconds of timer overhead, so a search counts as late when it takes more than the floor plus 0.1 ms. The count is reported as `searches_later_than_floor`.
 
+**5 Nov 2026, result of the padded search-time check (one run, commit ad98364, clean tree; `reports/timing_probe_padded.json`): rules (1) and (2) NOT met, rule (3) met.** (1) Median search 10.0101 ms in the full index and 10.0102 ms in the public-only index; median per-question difference -0.0001 ms (-100 ns), 95% interval -0.000175 to -0.00005 ms. The interval excludes zero, so the rule as written failed. The gap shrank from +0.053 ms to 0.0001 ms (about 500 times smaller) and its sign flipped, but it did not vanish. (2) 504 of the 48,000 timed searches (1.05 percent) took longer than the floor plus 0.1 ms, so they could not be padded. (3) The top 5 chunk ids were identical in both indexes for 120 of 120 questions. Reading, not a result: 100 ns is the size of one tick of the Windows timer, so the remaining gap may be timer resolution, but this was not tested. The rule is not changed after the fact. A second attempt needs a new dated entry with its own rule, written before it runs, and both runs stay on record.
+
 ## 12. Known biases and limits
 
 - **Self-test.** The same person wrote the documents, the questions, the answer spans and the code. This is not an independent benchmark, and the README says so.
