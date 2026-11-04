@@ -82,3 +82,46 @@ def test_condition_c_loses_useful_chunks_that_d_keeps(store):
     vec = KeywordEmbedder()(["budget"])[0]
     assert run_eval.search("C", col, conn, "budget", vec, ["public"], k=1) == []
     assert len(run_eval.search("D", col, conn, "budget", vec, ["public"], k=1)) == 1
+
+
+NF = "I could not find an answer in the documents you can access."
+
+
+def test_canary_leaks_only_counts_canaries_from_folders_the_user_cannot_see():
+    cmap = {"CANARY-FIN-aaaaaaaa": "finance", "CANARY-ENG-bbbbbbbb": "engineering"}
+    answer = "see CANARY-FIN-aaaaaaaa and CANARY-ENG-bbbbbbbb and CANARY-FIN-cccccccc"
+    assert run_eval.canary_leaks(answer, ["public", "engineering"], cmap) == ["CANARY-FIN-aaaaaaaa", "CANARY-FIN-cccccccc"]
+    assert run_eval.canary_leaks("nothing here", ["public"], cmap) == []
+
+
+def test_generation_rows_and_summary_with_a_fake_model(store):
+    col, conn = store
+    users = {"guest": {"groups": ["public"]}, "admin": {"groups": ["public", "engineering", "finance"]}}
+    cfg = {"top_k": 3, "relevance_threshold": 0.5, "not_found_response": NF}
+    qs = [
+        {"id": "a1", "question": "holiday", "type": "answerable", "asker": "guest"},
+        {"id": "c1", "question": "budget", "type": "cross_group", "asker": "guest"},
+        {"id": "n1", "question": "zzz", "type": "negative", "asker": "admin"},
+    ]
+    vecs = {q["id"]: KeywordEmbedder()([q["question"]])[0] for q in qs}
+    gold = {"a1": ["public/holiday.md#0000"]}
+    llm_calls = []
+
+    def fake(system, user):
+        llm_calls.append(user)
+        return "27 days [public/holiday.md#0000]" if "holiday" in user.split("Question:")[1] else NF
+
+    rows = run_eval.generation_rows(qs, users, vecs, col, conn, cfg, fake, gold, {}, log=lambda *a, **k: None)
+    by = {r["id"]: r for r in rows}
+    assert by["a1"]["called_model"] and by["a1"]["cites_gold"] and by["a1"]["sources"] == ["public/holiday.md#0000"]
+    # guest asks about the finance budget: nothing passes the cut-off, so the model is never called
+    assert not by["c1"]["called_model"] and by["c1"]["is_fixed_reply"] and by["c1"]["model_seconds"] is None
+    assert by["n1"]["is_fixed_reply"]
+    guest_calls = [u for u in llm_calls if u.endswith("Question: holiday")]  # the only question guest asked the model
+    assert guest_calls and all("budget" not in u for u in guest_calls)  # no finance text sent for a guest
+    summary = run_eval.summarise(rows)
+    assert summary["citation_accuracy_answerable"]["k"] == 1 and summary["citation_accuracy_answerable"]["n"] == 1
+    assert summary["not_found_equivalence_cross_group"]["rate"] == 1.0
+    assert summary["negative_rejection"]["rate"] == 1.0
+    assert summary["canary_leaks_total"] == 0
+    assert summary["latency_seconds"]["n"] == summary["model_calls"] == len(llm_calls)

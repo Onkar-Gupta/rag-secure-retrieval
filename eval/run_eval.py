@@ -2,6 +2,7 @@
 
     python eval/run_eval.py --stage tune        # dev split only; writes reports/tuning_dev.json
     python eval/run_eval.py --stage retrieval   # frozen settings from config.yaml; writes reports/retrieval.json
+    python eval/run_eval.py --stage model-dev   # dev split through the real model; writes reports/model_dev.json
 
 Conditions: A = no control, C = filter after retrieval, D = filter inside the query (the served path).
 A leak is judged by the FOLDER in the document path, never by the stored group label.
@@ -15,15 +16,19 @@ import json
 import math
 import platform
 import random
+import re
+import statistics
 import subprocess
 import tempfile
+import time
+import urllib.request
 from difflib import SequenceMatcher
 from pathlib import Path
 
 import yaml
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 
-from rag_secure import db
+from rag_secure import db, generator
 from rag_secure.ingest import ingest, open_collection
 from rag_secure.retriever import retrieve
 
@@ -259,6 +264,107 @@ def threshold_behaviour(col, conn, questions, users, vecs, t):
     return out
 
 
+# ---------- model check on the dev split (protocol section 10: model rule) ----------
+
+CANARY = re.compile(r"CANARY-(?:ENG|FIN)-[0-9a-f]{8}")
+
+
+def canary_folders():
+    out = {}
+    for path in (ROOT / "data" / "docs").rglob("*.md"):
+        for c in CANARY.findall(path.read_text(encoding="utf-8")):
+            out[c] = path.relative_to(ROOT / "data" / "docs").parts[0]
+    return out
+
+
+def canary_leaks(answer, groups, cmap):
+    """Canaries in the answer that belong to a folder the user may not see."""
+    return [c for c in CANARY.findall(answer) if cmap.get(c) not in groups]
+
+
+class TimedLLM:
+    """Wraps a model function; remembers whether it was called and for how long."""
+
+    def __init__(self, llm):
+        self.llm, self.calls, self.last = llm, 0, 0.0
+
+    def __call__(self, system, user):
+        self.calls += 1
+        t = time.perf_counter()
+        try:
+            return self.llm(system, user)
+        finally:
+            self.last = time.perf_counter() - t
+
+
+def generation_rows(questions, users, vecs, col, conn, cfg, llm, gold, cmap, delimit=True, log=print):
+    timed, rows = TimedLLM(llm), []
+    for i, q in enumerate(questions, 1):
+        groups, before = users[q["asker"]]["groups"], timed.calls
+        out = generator.ask(q["question"], groups, col, conn, cfg, timed, embedding=vecs[q["id"]], delimit=delimit)
+        called = timed.calls > before
+        row = {"id": q["id"], "type": q["type"], "asker": q["asker"], "called_model": called,
+               "model_seconds": timed.last if called else None, "found": out["found"], "answer": out["answer"],
+               "sources": out["sources"], "invalid_citations": out["invalid_citations"],
+               "canary_leaks": canary_leaks(out["answer"], groups, cmap),
+               "cites_gold": bool(set(out["sources"]) & set(gold.get(q["id"], []))),
+               "is_fixed_reply": out["answer"] == cfg["not_found_response"],
+               "marker_in_answer": bool(q.get("attack_marker")) and q["attack_marker"] in out["answer"]}
+        rows.append(row)
+        log(f"[model-dev] {i}/{len(questions)} {q['id']} {q['type']}: "
+            f"{f'{timed.last:.1f}s' if called else 'no model call'}", flush=True)
+    return rows
+
+
+def summarise(rows):
+    secs = [r["model_seconds"] for r in rows if r["called_model"]]
+    by = {t: [r for r in rows if r["type"] == t] for t in ("answerable", "cross_group", "negative", "injection", "poison")}
+    ans, neg, cross = by["answerable"], by["negative"], by["cross_group"]
+    return {
+        "latency_seconds": ({"n": len(secs), "median": statistics.median(secs),
+                             "p90": sorted(secs)[max(0, int(0.9 * len(secs)) - 1)], "max": max(secs)} if secs else None),
+        "model_calls": len(secs), "questions": len(rows),
+        "citation_accuracy_answerable": rate(sum(r["cites_gold"] for r in ans), len(ans)),
+        "negative_rejection": rate(sum(r["is_fixed_reply"] for r in neg), len(neg)),
+        "not_found_equivalence_cross_group": rate(sum(r["is_fixed_reply"] for r in cross), len(cross)),
+        "canary_leaks_total": sum(len(r["canary_leaks"]) for r in rows),
+        "runs_with_invalid_citation": sum(bool(r["invalid_citations"]) for r in rows),
+        "injection_marker_in_answer_dev": rate(sum(r["marker_in_answer"] for r in by["injection"]), len(by["injection"])),
+    }
+
+
+def ollama_status(url):
+    try:
+        with urllib.request.urlopen(f"{url}/api/ps", timeout=10) as r:
+            return json.load(r).get("models", [])
+    except OSError as e:
+        return f"unavailable: {e}"
+
+
+def model_dev(args):
+    s = frozen_settings()
+    cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
+    questions = [q for q in load_questions() if q["split"] == "dev"]
+    users, vecs, cmap = load_users(), embed_questions(questions), canary_folders()
+    llm = generator.ollama_llm(cfg["model"], cfg["ollama_url"], cfg["temperature"], cfg["seed"], cfg["max_tokens"])
+    print(f"[model-dev] model {cfg['model']}, {len(questions)} dev questions, warming up the model...", flush=True)
+    t = time.perf_counter()
+    llm("Reply with the single word OK.", "Say OK.")
+    warm = time.perf_counter() - t
+    print(f"[model-dev] warm-up (includes loading the model): {warm:.1f}s", flush=True)
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        col, conn = build_index(tmp, s["chunk_size"], s["chunk_overlap"])
+        gold = {q["id"]: gold_chunks(q, conn) for q in questions if q["type"] == "answerable"}
+        rows = generation_rows(questions, users, vecs, col, conn, cfg, llm, gold, cmap)
+    summary = summarise(rows)
+    summary["median_latency_under_20s"] = bool(summary["latency_seconds"]) and summary["latency_seconds"]["median"] < 20
+    result = {"stage": "model-dev", "split": "dev", "model": cfg["model"], "settings": s, "warm_up_seconds": warm,
+              "ollama_loaded_models_after_run": ollama_status(cfg["ollama_url"]), "summary": summary,
+              "rows": rows, "meta": meta()}
+    write(args.reports / "model_dev.json", result)
+    print(json.dumps(summary, indent=1))
+
+
 # ---------- report plumbing ----------
 
 def ram_gb():
@@ -295,10 +401,10 @@ def write(path, obj):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stage", choices=["tune", "retrieval"], required=True)
+    ap.add_argument("--stage", choices=["tune", "retrieval", "model-dev"], required=True)
     ap.add_argument("--reports", type=Path, default=ROOT / "reports")
     args = ap.parse_args()
-    {"tune": tune, "retrieval": retrieval}[args.stage](args)
+    {"tune": tune, "retrieval": retrieval, "model-dev": model_dev}[args.stage](args)
 
 
 if __name__ == "__main__":
