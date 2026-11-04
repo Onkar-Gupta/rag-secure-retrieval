@@ -113,3 +113,11 @@ def test_old_database_gets_the_quarantine_column(tmp_path):
 def test_threshold_drops_far_chunks(store):
     near = retrieve(*store, "holiday", ["public", "finance"], k=5, threshold=0.1)
     assert [h["group"] for h in near] == ["public"]
+
+
+def test_ready_made_embedding_gives_the_same_answer_and_the_same_filter(store):
+    vec = KeywordEmbedder()(["budget"])[0]
+    by_text = retrieve(*store, "budget", ["public", "engineering"], k=3)
+    by_vector = retrieve(*store, "ignored text", ["public", "engineering"], k=3, embedding=vec)
+    assert [h["chunk_id"] for h in by_text] == [h["chunk_id"] for h in by_vector]
+    assert all(h["group"] != "finance" for h in by_vector)

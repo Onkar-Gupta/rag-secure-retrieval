@@ -1,0 +1,305 @@
+"""Retrieval evaluation, no language model. Follows eval/protocol.md.
+
+    python eval/run_eval.py --stage tune        # dev split only; writes reports/tuning_dev.json
+    python eval/run_eval.py --stage retrieval   # frozen settings from config.yaml; writes reports/retrieval.json
+
+Conditions: A = no control, C = filter after retrieval, D = filter inside the query (the served path).
+A leak is judged by the FOLDER in the document path, never by the stored group label.
+"""
+
+import argparse
+import ctypes
+import datetime
+import importlib.metadata as md
+import json
+import math
+import platform
+import random
+import subprocess
+import tempfile
+from difflib import SequenceMatcher
+from pathlib import Path
+
+import yaml
+from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+
+from rag_secure import db
+from rag_secure.ingest import ingest, open_collection
+from rag_secure.retriever import retrieve
+
+ROOT = Path(__file__).resolve().parent.parent
+GRID_SIZES, GRID_OVERLAPS, K = (300, 500, 800), (0, 100), 5
+
+
+# ---------- statistics ----------
+
+def wilson(k, n, z=1.96):
+    if n == 0:
+        return None
+    p = k / n
+    d = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / d
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return [max(0.0, centre - half), min(1.0, centre + half)]
+
+
+def rate(k, n):
+    out = {"k": k, "n": n, "rate": (k / n if n else None), "wilson95": wilson(k, n)}
+    if k == 0 and n:
+        out["rule_of_three_upper95"] = 3 / n
+    return out
+
+
+def bootstrap_diff(a, b, resamples=10000, seed=0):
+    """Paired bootstrap over questions of mean(a - b); 95% percentile interval."""
+    rng = random.Random(seed)
+    d = [x - y for x, y in zip(a, b)]
+    m = len(d)
+    means = sorted(sum(d[rng.randrange(m)] for _ in range(m)) / m for _ in range(resamples))
+    return {"mean_diff": sum(d) / m, "ci95": [means[int(0.025 * resamples)], means[int(0.975 * resamples) - 1]],
+            "resamples": resamples, "seed": seed, "n": m}
+
+
+# ---------- data ----------
+
+def load_questions():
+    lines = (ROOT / "eval" / "questions.jsonl").read_text(encoding="utf-8").splitlines()
+    return [json.loads(line) for line in lines]
+
+
+def load_users():
+    return yaml.safe_load((ROOT / "eval" / "users.yaml").read_text(encoding="utf-8"))["users"]
+
+
+def folder(doc_id):
+    return doc_id.split("/")[0]
+
+
+def gold_chunks(q, conn):
+    """Protocol 7: chunks holding the whole hint; if none does (chunking split it), chunks holding
+    at least half of the hint's characters as one contiguous piece."""
+    hint = q["gold_chunk_hint"]
+    rows = [r for d in q["gold_doc_ids"]
+            for r in conn.execute("SELECT chunk_id, text FROM chunks WHERE doc_id=? ORDER BY chunk_id", (d,))]
+    whole = [cid for cid, t in rows if hint in t]
+    if whole:
+        return whole
+    return [cid for cid, t in rows
+            if SequenceMatcher(None, t, hint, autojunk=False).find_longest_match(0, len(t), 0, len(hint)).size
+            >= len(hint) / 2]
+
+
+def embed_questions(questions):
+    vecs = DefaultEmbeddingFunction()([q["question"] for q in questions])
+    return {q["id"]: [float(x) for x in v] for q, v in zip(questions, vecs)}
+
+
+def build_index(tmp, size, overlap):
+    ingest(ROOT / "data" / "docs", Path(tmp) / "c", Path(tmp) / "t.sqlite", size, overlap)
+    return open_collection(Path(tmp) / "c"), db.connect(Path(tmp) / "t.sqlite")
+
+
+# ---------- the three conditions ----------
+
+def search(cond, col, conn, text, vec, groups, k=K):
+    if cond == "D":  # the served path
+        return retrieve(col, conn, text, groups, k=k, embedding=vec)
+    res = col.query(query_embeddings=[vec], n_results=k)  # A: no control
+    hits = [{"chunk_id": i, "doc_id": m["doc_id"], "distance": d}
+            for i, m, d in zip(res["ids"][0], res["metadatas"][0], res["distances"][0])]
+    if cond == "C":  # filter after retrieval
+        hits = [h for h in hits if folder(h["doc_id"]) in groups]
+    return hits
+
+
+def leak_runs(col, conn, questions, users, vecs):
+    out = {}
+    for cond in "ACD":
+        runs = with_leak = chunks = 0
+        examples = []
+        for uname, user in users.items():
+            for q in questions:
+                hits = search(cond, col, conn, q["question"], vecs[q["id"]], user["groups"])
+                bad = [h for h in hits if folder(h["doc_id"]) not in user["groups"]]
+                runs += 1
+                with_leak += bool(bad)
+                chunks += len(bad)
+                if bad and len(examples) < 5:
+                    examples.append(f"{q['id']} as {uname}")
+        out[cond] = {"runs": runs, "runs_with_leak": with_leak, "leaked_chunks": chunks,
+                     "leak_rate": rate(with_leak, runs), "examples": examples}
+    return out
+
+
+def hit_flags(cond, col, conn, questions, users, vecs, gold):
+    """{question id: 0/1} for answerable questions, asked as their asker."""
+    flags = {}
+    for q in questions:
+        if q["type"] != "answerable":
+            continue
+        hits = search(cond, col, conn, q["question"], vecs[q["id"]], users[q["asker"]]["groups"])
+        flags[q["id"]] = int(any(h["chunk_id"] in gold[q["id"]] for h in hits))
+    return flags
+
+
+def top1(col, conn, q, users, vecs):
+    hits = retrieve(col, conn, q["question"], users[q["asker"]]["groups"], k=K, embedding=vecs[q["id"]])
+    return hits[0]["distance"]
+
+
+# ---------- tuning (dev split only) ----------
+
+def pick_threshold(answerable, negative):
+    """Cut-off maximising balanced accuracy over top-1 distances; ties go to the largest cut-off."""
+    best = None
+    for t in sorted(set(answerable) | set(negative)):
+        ba = (sum(d <= t for d in answerable) / len(answerable) + sum(d > t for d in negative) / len(negative)) / 2
+        if best is None or ba >= best[0]:
+            best = (ba, t)
+    return best[1], best[0]
+
+
+def tune(args):
+    questions = [q for q in load_questions() if q["split"] == "dev"]
+    users, vecs = load_users(), embed_questions(questions)
+    grid = []
+    for size in GRID_SIZES:
+        for overlap in GRID_OVERLAPS:
+            print(f"[tune] chunk_size={size} overlap={overlap}: indexing and querying dev questions...", flush=True)
+            with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+                col, conn = build_index(tmp, size, overlap)
+                gold = {q["id"]: gold_chunks(q, conn) for q in questions if q["type"] == "answerable"}
+                flags = hit_flags("D", col, conn, questions, users, vecs, gold)
+                ans = [top1(col, conn, q, users, vecs) for q in questions if q["type"] == "answerable"]
+                neg = [top1(col, conn, q, users, vecs) for q in questions if q["type"] == "negative"]
+                t, ba = pick_threshold(ans, neg)
+                n_chunks = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+            row = {"chunk_size": size, "overlap": overlap, "chunks": n_chunks,
+                   "dev_hit_rate_at_5_D": sum(flags.values()) / len(flags), "dev_answerable": len(flags),
+                   "threshold": t, "balanced_accuracy": ba,
+                   "gold_chunks_per_question": sum(len(g) for g in gold.values()) / len(gold)}
+            grid.append(row)
+            print(f"        hit@5={row['dev_hit_rate_at_5_D']:.3f} threshold={t:.4f} BA={ba:.3f} chunks={n_chunks}", flush=True)
+    chosen = max(grid, key=lambda r: (r["dev_hit_rate_at_5_D"], r["balanced_accuracy"], -r["chunk_size"], -r["overlap"]))
+    result = {"stage": "tune", "split": "dev", "rule": "highest dev hit rate@5 under D; ties: higher balanced "
+              "accuracy, then smaller chunk size, then smaller overlap; threshold maximises balanced accuracy, "
+              "ties to the largest cut-off", "top_k": K, "grid": grid, "chosen": chosen, "meta": meta()}
+    write(args.reports / "tuning_dev.json", result)
+    print(f"[tune] chosen: chunk_size={chosen['chunk_size']} overlap={chosen['overlap']} "
+          f"threshold={chosen['threshold']:.6f}", flush=True)
+
+
+# ---------- the retrieval run ----------
+
+def frozen_settings():
+    cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
+    keys = ("chunk_size", "chunk_overlap", "top_k", "relevance_threshold")
+    if not all(isinstance(cfg[k], (int, float)) for k in keys):
+        raise SystemExit("config.yaml is not frozen yet: run --stage tune, then write the settings in "
+                         "config.yaml and in the protocol Amendments before the test run.")
+    if cfg["top_k"] != K:
+        raise SystemExit(f"top_k must be {K} (fixed by the protocol)")
+    return {k: cfg[k] for k in keys}
+
+
+def retrieval(args):
+    s = frozen_settings()
+    questions, users = load_questions(), load_users()
+    vecs = embed_questions(questions)
+    print(f"[retrieval] frozen settings {s}; indexing...", flush=True)
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        col, conn = build_index(tmp, s["chunk_size"], s["chunk_overlap"])
+        gold = {q["id"]: gold_chunks(q, conn) for q in questions if q["type"] == "answerable"}
+        print(f"[retrieval] leak runs: {len(questions)} questions x {len(users)} users x 3 conditions...", flush=True)
+        leaks = leak_runs(col, conn, questions, users, vecs)
+        hits, boot = {}, {}
+        for cond in "ACD":
+            print(f"[retrieval] hit rate, condition {cond}...", flush=True)
+            flags = hit_flags(cond, col, conn, questions, users, vecs, gold)
+            hits[cond] = {}
+            for split in ("dev", "test"):
+                ids = [q["id"] for q in questions if q["type"] == "answerable" and q["split"] == split]
+                hits[cond][split] = rate(sum(flags[i] for i in ids), len(ids))
+                hits[cond][split]["flags"] = {i: flags[i] for i in ids}
+        for split in ("dev", "test"):
+            ids = list(hits["D"][split]["flags"])
+            boot[split] = bootstrap_diff([hits["D"][split]["flags"][i] for i in ids],
+                                         [hits["C"][split]["flags"][i] for i in ids])
+        thr = threshold_behaviour(col, conn, questions, users, vecs, s["relevance_threshold"])
+    for cond in "ACD":
+        for split in hits[cond]:
+            del hits[cond][split]["flags"]
+    d_test, c_test = hits["D"]["test"]["rate"], hits["C"]["test"]["rate"]
+    verdict = {
+        "pass_mark_1_context_leaks_D_zero": leaks["D"]["runs_with_leak"] == 0,
+        "pass_mark_1_note": "context leaks only; canary leaks are checked at the generation stage",
+        "pass_mark_2_hit_rate_D_at_least_C_on_test": d_test >= c_test,
+        "pass_mark_2_hit_rate_D_at_least_0.80_on_test": d_test >= 0.80,
+        "control_A_leaks_so_the_test_can_see_leaks": leaks["A"]["runs_with_leak"] > 0,
+        "control_C_zero_leaks": leaks["C"]["runs_with_leak"] == 0,
+    }
+    result = {"stage": "retrieval", "settings": s, "leaks": leaks, "hit_rate_at_5": hits,
+              "paired_bootstrap_D_minus_C": boot, "threshold_behaviour_context_only": thr,
+              "gold_chunks": gold, "verdict": verdict, "meta": meta()}
+    write(args.reports / "retrieval.json", result)
+    print(json.dumps({"leaks": {c: (v["runs_with_leak"], v["runs"]) for c, v in leaks.items()},
+                      "hit_test": {c: hits[c]["test"]["rate"] for c in "ACD"}, "verdict": verdict}, indent=1))
+
+
+def threshold_behaviour(col, conn, questions, users, vecs, t):
+    """Context only (no pass mark): how the frozen cut-off treats each question type under D."""
+    out = {}
+    for typ in ("answerable", "negative", "cross_group"):
+        for split in ("dev", "test"):
+            qs = [q for q in questions if q["type"] == typ and q["split"] == split]
+            d = [top1(col, conn, q, users, vecs) for q in qs]
+            inside = sum(x <= t for x in d)
+            out[f"{typ}_{split}"] = {"n": len(qs), "top1_inside_cutoff": inside,
+                                     "share_with_no_chunk_inside_cutoff": (len(qs) - inside) / len(qs)}
+    return out
+
+
+# ---------- report plumbing ----------
+
+def ram_gb():
+    try:
+        class Mem(ctypes.Structure):
+            _fields_ = [("length", ctypes.c_ulong), ("load", ctypes.c_ulong), ("total", ctypes.c_ulonglong)] + [
+                (f"f{i}", ctypes.c_ulonglong) for i in range(6)]
+        m = Mem()
+        m.length = ctypes.sizeof(Mem)
+        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m))
+        return round(m.total / 2**30, 1)
+    except (AttributeError, OSError):  # not Windows, or the call failed
+        return None
+
+
+def git(*a):
+    return subprocess.run(["git", *a], check=False, cwd=ROOT, capture_output=True, text=True).stdout.strip()
+
+
+def meta():
+    return {"date": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
+            "commit": git("rev-parse", "HEAD"), "working_tree_dirty": bool(git("status", "--porcelain")),
+            "python": platform.python_version(), "os": platform.platform(), "cpu": platform.processor(),
+            "cpu_threads": __import__("os").cpu_count(), "ram_gb": ram_gb(), "gpu": "not used (ONNX Runtime on CPU)",
+            "packages": {p: md.version(p) for p in ("chromadb", "onnxruntime", "pypdf", "PyYAML")},
+            "embedding_model": "chroma default all-MiniLM-L6-v2 (ONNX)", "bootstrap": "10000 resamples, seed 0"}
+
+
+def write(path, obj):
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps(obj, indent=1) + "\n", encoding="utf-8")
+    print(f"[written] {path}", flush=True)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--stage", choices=["tune", "retrieval"], required=True)
+    ap.add_argument("--reports", type=Path, default=ROOT / "reports")
+    args = ap.parse_args()
+    {"tune": tune, "retrieval": retrieval}[args.stage](args)
+
+
+if __name__ == "__main__":
+    main()
