@@ -68,7 +68,12 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
                 metas.append({"doc_id": doc_id, "group": grp, "page": page or 0})
         if ids:
             col.add(ids=ids, documents=texts, metadatas=metas)
-        conn.execute("INSERT OR REPLACE INTO documents VALUES (?,?,?)", (doc_id, grp, sha))
+        # Upsert, not replace: a changed file must keep its quarantine flag.
+        conn.execute(
+            "INSERT INTO documents (doc_id, grp, sha256) VALUES (?,?,?) "
+            "ON CONFLICT(doc_id) DO UPDATE SET grp=excluded.grp, sha256=excluded.sha256",
+            (doc_id, grp, sha),
+        )
         conn.executemany(
             "INSERT INTO chunks VALUES (?,?,?,?)",
             [(i, doc_id, m["page"] or None, t) for i, t, m in zip(ids, texts, metas)],
