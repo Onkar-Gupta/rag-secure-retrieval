@@ -64,7 +64,8 @@ Four designs were compared. **A** no control. **B** prompt-only: the model is to
 | Median time per answer (RTX 4070 Laptop GPU, model fully on GPU) | 2.5 s (90th percentile 2.7 s) | [`generation.json`](reports/generation.json) |
 | PDF check (6 PDFs, 15 pages, 12 questions): forbidden chunks D / control A | 0 of 48 / 16 of 48 | [`pdf_check.json`](reports/pdf_check.json) |
 | PDF check: right page found / cited | 6 of 6 / 6 of 6 | [`pdf_check.json`](reports/pdf_check.json) |
-| Search time for `guest`, full index vs public-only index | 2.133 ms vs 2.077 ms; difference +0.053 ms (95% interval +0.049 to +0.056 ms) | [`timing_probe.json`](reports/timing_probe.json) |
+| Search time for `guest`, full index vs public-only index, no padding | 2.133 ms vs 2.077 ms; difference +0.053 ms (95% interval +0.049 to +0.056 ms) | [`timing_probe.json`](reports/timing_probe.json) |
+| Same check with every search padded to 20 ms | Difference 0.0000 ms (95% interval -0.0001 to +0.0001 ms). 2.29% of searches ran past the 20 ms floor (limit was 0.1%), so the check is reported as failed | [`timing_probe_padded_20ms.json`](reports/timing_probe_padded_20ms.json) |
 | Independent question set written by someone other than the code author | TBC | |
 
 What these numbers do and do not show:
@@ -73,7 +74,7 @@ What these numbers do and do not show:
 - **D has no measured accuracy edge over C.** Both found the right chunk for 39 of 40 questions. The case for D is design: the other groups' text is never read in the first place.
 - **All 5 citation misses were "not found" replies** (nothing within the cut-off). None was a wrong fact.
 - **Delimiting retrieved text with markers showed no effect on this model.** No injection attack succeeded in either arm (0 of 4 marker attacks, 0 of 3 reveal attacks), so the test cannot show a benefit. The sets are small (upper bound 0.49 at n = 4).
-- **Search time differs slightly with other groups' documents present.** The pre-registered rule (interval includes zero) was not met. The gap is about 0.05 ms against 2,500 ms for a full answer, and the top 5 chunks were identical in both indexes (120 of 120). Whether an outside observer could use it was not tested. Equalising search time is on the roadmap.
+- **Search time.** Without padding, search was 0.05 ms slower with other groups' documents present (the pre-registered rule was not met). The service now pads every search to 20 ms (`search_floor_ms`), and the measured difference fell to 0.0000 ms. The padded check still failed one of its three rules: 2.29% of searches took longer than the floor, which cannot be padded. The top 5 chunks were identical in both indexes (120 of 120). Whether an outside observer could use the original 0.05 ms gap was not tested.
 - **A poisoned document** (a restricted document stating a false value) never crossed a group boundary. Within a group, the model gave the false value in 3 of 5 runs for `eng` and `admin`, and 0 of 5 for `guest` and `fin` (anecdotal, n = 5).
 - The pass marks, the full list of amendments and the disclosures are in [`eval/protocol.md`](eval/protocol.md). Pass mark 6 (delimiting helps) was not shown.
 
@@ -129,6 +130,7 @@ All settings live in `config.yaml`. The retrieval and answering values below wer
 | `min_page_chars` | A PDF page with less text is reported as probably scanned | `20` |
 | `top_k` | Chunks retrieved per question | `5` |
 | `relevance_threshold` | Cosine distance above which a chunk is ignored | `0.6079` |
+| `search_floor_ms` | Every search takes at least this long, so timing does not show what other groups hold | `20` |
 | `not_found_response` | The fixed reply when nothing qualifies | "I could not find an answer in the documents you can access." |
 | `ollama_url` | Where Ollama is listening | `http://localhost:11434` |
 | `model` | Ollama model tag | `phi4-mini:3.8b` |
@@ -177,7 +179,7 @@ TBC
 - **Self-test.** The same person wrote the documents, the questions and the code. This is not an independent benchmark. The independent set is TBC.
 - **Small sets.** 4 injection cases, 4 poison cases, 6 PDF questions. Treat those results as indications.
 - **Sign-in.** API keys are a lookup against stored hashes. There is no user management, HTTPS or rate limiting; run the service behind a reverse proxy if you expose it.
-- **Timing.** Search time differs by about 0.05 ms with other groups' documents present (see Results). Reply length for "not found" is fixed at 104 bytes.
+- **Timing.** Searches are padded to a fixed 20 ms, but 2.29% ran longer in the check (see Results), and padding must be raised for a larger index. The model step is not padded. Reply length for "not found" is fixed at 104 bytes.
 - **Hidden instructions in documents** cannot be fully blocked by any prompt technique. Retrieved text is wrapped in markers and marker look-alikes are broken up, but this showed no measured effect on this model.
 - **Number check.** The check that flags unsupported numbers reads numbers and shared wording, not meaning. About 7 percent of made-up swapped numbers still pass.
 - **Trust inside a group.** Everything within a user's own groups is trusted equally. One group per document.
@@ -204,7 +206,7 @@ TBC
 - [ ] Independent question set (TBC)
 - [ ] Several groups per document
 - [ ] Scale check at 1,000 and 10,000 documents
-- [ ] Equalise search time across indexes
+- [ ] Cover the 2.29% of searches that run past the padding floor
 - [ ] Larger injection and poison sets
 - [ ] Optional model-based check that a cited chunk supports the claim
 
