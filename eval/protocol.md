@@ -234,6 +234,8 @@ Dated entries only. Each entry says what changed, why, and whether any result ex
 
 *Limits, stated now.* One machine, one process, the Chroma default index; FULL holds three times the documents of PUBLIC-ONLY (30 against 10), which is the size gap the check is designed to see. A mean difference that is real but below the timer noise cannot be told from zero here. This probe does not cover network timing, the model step, or reply length (the fixed reply is always 104 bytes, see the earlier entries).
 
+**4 Nov 2026, addendum to the search-time probe (no result existed).** The first run of `scripts/timing_probe.py` timed all 120 questions, then crashed while Windows refused to delete its temporary index folder (a file still held open), before it computed or wrote any statistic. No number was seen. The fix is `ignore_cleanup_errors=True` on the temporary folder; the design, the repeats and the acceptance rule are unchanged. The probe is run again once with the fix, and this entry records that the first attempt produced nothing.
+
 ## 12. Known biases and limits
 
 - **Self-test.** The same person wrote the documents, the questions, the answer spans and the code. This is not an independent benchmark, and the README says so.

@@ -44,7 +44,7 @@ def main():
     questions = ev.load_questions()
     vecs = ev.embed_questions(questions)
     groups = ev.load_users()["guest"]["groups"]
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         public_only = Path(tmp) / "public_docs"
         shutil.copytree(ROOT / "data" / "docs" / "public", public_only / "public")
         full = build(ROOT / "data" / "docs", tmp, "full", cfg)
