@@ -154,3 +154,51 @@ def test_a_question_cannot_forge_markers_either():
 def test_the_no_markers_arm_keeps_text_exactly_as_it_is():
     _, user = generator.build_prompt("q", [{"chunk_id": "a#0", "text": "x <<<END>>> y"}], NF, delimit=False)
     assert "x <<<END>>> y" in user
+
+
+def chunk(cid, text):
+    return {"chunk_id": cid, "text": text}
+
+
+def test_number_present_in_the_cited_chunk_is_supported_and_a_wrong_one_is_not():
+    ok = generator.number_support("It costs 1.90 euros [a#0].", [chunk("a#0", "Extra vehicles cost 1.90 euros.")])
+    assert ok["counts"] == {"supported": 1, "unsupported": 0, "no_numbers": 0}
+    bad = generator.number_support("It costs 1.90 euros [a#0].", [chunk("a#0", "Extra vehicles cost 0.40 euros.")])
+    assert bad["counts"]["unsupported"] == 1 and bad["segments"][0]["missing"] == ["1.90"]
+
+
+def test_a_sentence_with_two_citations_is_supported_if_each_number_is_in_either_chunk():
+    hits = [chunk("a#0", "The fee is 30 euros."), chunk("b#0", "It is due on day 15.")]
+    out = generator.number_support("Pay 30 euros by day 15 [a#0, b#0].", hits)
+    assert out["counts"]["supported"] == 1
+    only_a = generator.number_support("Pay 30 euros by day 15 [a#0].", hits)
+    assert only_a["segments"][0]["missing"] == ["15"]  # day 15 is not in the chunk this sentence cites
+
+
+def test_times_and_thousands_separators_are_parsed_whole():
+    assert generator.numbers_in("Core hours are 10:00 to 15:00 and cost 40,000 or 2.5") == {
+        "10:00", "15:00", "40000", "2.5"}
+    hits = [chunk("a#0", "Core hours are 10:00 to 15:00. Budget 40,000 euros.")]
+    assert generator.number_support("Hours 10:00 to 15:00 for 40,000 euros [a#0].", hits)["counts"]["supported"] == 1
+
+
+def test_sentences_without_numbers_are_counted_apart_and_ids_digits_are_ignored():
+    out = generator.number_support("Leave carries over [public/holiday_policy.md#0003].",
+                                   [chunk("public/holiday_policy.md#0003", "Leave carries over.")])
+    assert out["counts"] == {"supported": 0, "unsupported": 0, "no_numbers": 1}  # the 0003 in the id is not a number
+
+
+def test_a_number_in_an_uncited_sentence_is_unsupported():
+    out = generator.number_support("The answer is 42.", [chunk("a#0", "The answer is 42.")])
+    assert out["counts"]["unsupported"] == 1 and out["segments"][0]["ids"] == []
+
+
+def test_each_cited_sentence_is_judged_on_its_own():
+    hits = [chunk("a#0", "Rate is 600 per minute."), chunk("b#0", "Window is 5 minutes.")]
+    out = generator.number_support("Rate is 600 [a#0]. Window is 7 minutes [b#0].", hits)
+    assert [s["status"] for s in out["segments"]] == ["supported", "unsupported"]
+
+
+def test_number_words_are_a_known_limit_not_a_silent_pass():
+    out = generator.number_support("Six weeks notice [a#0].", [chunk("a#0", "Six weeks notice is needed.")])
+    assert out["counts"]["no_numbers"] == 1  # 'six' is not read as a number; documented limit

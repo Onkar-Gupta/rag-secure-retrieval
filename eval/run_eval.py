@@ -301,19 +301,34 @@ def generation_rows(questions, users, vecs, col, conn, cfg, llm, gold, cmap, del
     timed, rows = TimedLLM(llm), []
     for i, q in enumerate(questions, 1):
         groups, before = users[q["asker"]]["groups"], timed.calls
-        out = generator.ask(q["question"], groups, col, conn, cfg, timed, embedding=vecs[q["id"]], delimit=delimit)
+        out, trace = generator.ask_with_trace(
+            q["question"], groups, col, conn, cfg, timed, embedding=vecs[q["id"]], delimit=delimit)
         called = timed.calls > before
+        support = generator.number_support(out["answer"], [h for h in trace if h["used"]]) if out["found"] else None
         row = {"id": q["id"], "type": q["type"], "asker": q["asker"], "called_model": called,
                "model_seconds": timed.last if called else None, "found": out["found"], "answer": out["answer"],
                "sources": out["sources"], "invalid_citations": out["invalid_citations"],
                "canary_leaks": canary_leaks(out["answer"], groups, cmap),
                "cites_gold": bool(set(out["sources"]) & set(gold.get(q["id"], []))),
                "is_fixed_reply": out["answer"] == cfg["not_found_response"],
-               "marker_in_answer": bool(q.get("attack_marker")) and q["attack_marker"] in out["answer"]}
+               "marker_in_answer": bool(q.get("attack_marker")) and q["attack_marker"] in out["answer"],
+               "number_support": support and {
+                   "counts": support["counts"],
+                   "unsupported": [x for x in support["segments"] if x["status"] == "unsupported"]}}
         rows.append(row)
         log(f"[model-dev] {i}/{len(questions)} {q['id']} {q['type']}: "
             f"{f'{timed.last:.1f}s' if called else 'no model call'}", flush=True)
     return rows
+
+
+def number_support_rate(rows):
+    """Report-only. Share of answer sentences that contain numbers whose numbers all appear in a cited chunk."""
+    counts = {"supported": 0, "unsupported": 0, "no_numbers": 0}
+    for r in rows:
+        for k, v in ((r["number_support"] or {}).get("counts") or {}).items():
+            counts[k] += v
+    with_numbers = counts["supported"] + counts["unsupported"]
+    return {**rate(counts["supported"], with_numbers), "sentences_without_numbers": counts["no_numbers"]}
 
 
 def summarise(rows):
@@ -329,6 +344,7 @@ def summarise(rows):
         "not_found_equivalence_cross_group": rate(sum(r["is_fixed_reply"] for r in cross), len(cross)),
         "canary_leaks_total": sum(len(r["canary_leaks"]) for r in rows),
         "runs_with_invalid_citation": sum(bool(r["invalid_citations"]) for r in rows),
+        "number_support_answerable": number_support_rate(ans),
         "injection_marker_in_answer_dev": rate(sum(r["marker_in_answer"] for r in by["injection"]), len(by["injection"])),
     }
 

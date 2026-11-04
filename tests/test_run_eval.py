@@ -125,3 +125,19 @@ def test_generation_rows_and_summary_with_a_fake_model(store):
     assert summary["negative_rejection"]["rate"] == 1.0
     assert summary["canary_leaks_total"] == 0
     assert summary["latency_seconds"]["n"] == summary["model_calls"] == len(llm_calls)
+
+
+def test_number_support_is_reported_per_row_and_in_the_summary(store):
+    col, conn = store
+    users = {"admin": {"groups": ["public", "engineering", "finance"]}}
+    cfg = {"top_k": 3, "relevance_threshold": 0.5, "not_found_response": NF}
+    qs = [{"id": "a1", "question": "holiday", "type": "answerable", "asker": "admin"}]
+    vecs = {"a1": KeywordEmbedder()(["holiday"])[0]}
+    # the chunk text is the single word 'holiday', so a made-up number cannot be supported
+    rows = run_eval.generation_rows(
+        qs, users, vecs, col, conn, cfg, lambda s, u: "It is 27 days [public/holiday.md#0000].", {}, {},
+        log=lambda *a, **k: None)
+    assert rows[0]["number_support"]["counts"]["unsupported"] == 1
+    assert rows[0]["number_support"]["unsupported"][0]["missing"] == ["27"]
+    summary = run_eval.summarise(rows)["number_support_answerable"]
+    assert summary["k"] == 0 and summary["n"] == 1 and summary["sentences_without_numbers"] == 0

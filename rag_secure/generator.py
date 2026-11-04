@@ -121,3 +121,40 @@ def ollama_llm(model, url="http://localhost:11434", temperature=0, seed=0, max_t
                                f"the model '{model}' pulled?") from e
 
     return call
+
+
+_NUMBER = re.compile(r"\d+(?:[.,:]\d+)*")
+_CITED_SEGMENT = re.compile(r"([^\[\]]*)\[([^\[\]\n]+)\]")
+
+
+def numbers_in(text):
+    """The set of numbers in a text: digits with optional . , : parts. Thousands commas are removed."""
+    return {n.replace(",", "") for n in _NUMBER.findall(text)}
+
+
+def number_support(answer, hits):
+    """Report-only check: does every number in a sentence appear in a chunk that sentence cites?
+
+    The answer is split into segments, each ending at a [ids] citation (text after the last
+    citation is an uncited segment). A segment with no numbers is 'no_numbers'. Otherwise it is
+    'supported' when every number appears in at least one cited chunk, else 'unsupported'. This
+    catches a wrong or invented figure. It does not check meaning, and it does not understand
+    number words ('six' versus '6'), so it is a measurement, not enforcement."""
+    by_id = {h["chunk_id"]: numbers_in(h["text"]) for h in hits}
+    segments, end = [], 0
+    for m in _CITED_SEGMENT.finditer(answer):
+        ids = [re.sub(r"^DOC\s+", "", p.strip()) for p in m.group(2).split(",") if p.strip()]
+        segments.append((m.group(1), ids))
+        end = m.end()
+    if re.search(r"\w", answer[end:]):  # a lone full stop after the last citation is not a sentence
+        segments.append((answer[end:], []))
+    out, counts = [], {"supported": 0, "unsupported": 0, "no_numbers": 0}
+    for text, ids in segments:
+        nums = numbers_in(text)
+        have = set().union(*(by_id.get(i, set()) for i in ids)) if ids else set()
+        missing = sorted(nums - have)
+        status = "no_numbers" if not nums else ("unsupported" if missing else "supported")
+        counts[status] += 1
+        out.append({"text": text.strip(" .,;:"), "ids": ids, "numbers": sorted(nums), "status": status,
+                    "missing": missing})
+    return {"segments": out, "counts": counts}
