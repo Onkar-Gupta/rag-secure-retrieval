@@ -11,10 +11,10 @@ chunk_overlap: 100
 top_k: 5
 relevance_threshold: 0.6079088449478149
 
-# Answering. The model is chosen on the dev split in step 5 (rule in the protocol, section 10).
+# Answering. One MIT-licensed model chosen by the owner (protocol Amendments, 4 Nov 2026).
 not_found_response: "I could not find an answer in the documents you can access."
 ollama_url: http://localhost:11434
-model: TBC
+model: phi4-mini:3.8b
 temperature: 0
 seed: 0
 max_tokens: 300
