@@ -16,3 +16,22 @@ jobs:
       - run: pip install -e .
       - run: ruff check .
       - run: pytest -v
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t rag-secure .
+      - name: Ingest smoke test
+        run: |
+          docker run --rm rag-secure rag ingest | tee ingest.log
+          grep -q "documents added 30" ingest.log
+      - name: Service smoke test (no model is running, so a question must give 503)
+        run: |
+          docker run -d --name rag -p 8000:8000 rag-secure
+          for i in $(seq 1 60); do curl -sf http://localhost:8000/health && break; sleep 2; done
+          curl -sf http://localhost:8000/ | grep -q "Ginger"
+          curl -sf -o /dev/null http://localhost:8000/ui/img/ginger_waiting.png
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8000/ask -H 'Content-Type: application/json' -d '{"question":"x"}')" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8000/ask -H 'X-API-Key: demo-key-eng' -H 'Content-Type: application/json' -d '{"question":"Which HTTP status code do throttled requests receive?"}')" = 503
+          docker logs rag

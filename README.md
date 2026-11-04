@@ -191,7 +191,14 @@ curl -X POST http://127.0.0.1:8000/ask \
 
 ## Docker
 
-TBC
+The image holds the service, the 30 demo documents, the demo users and the embedding model. Ollama and the language model stay on your machine, outside the image.
+
+```bash
+docker build -t rag-secure .
+docker run --rm -p 8000:8000 --add-host=host.docker.internal:host-gateway rag-secure
+```
+
+Then open `http://localhost:8000`. The service reaches Ollama at `host.docker.internal:11434`, so Ollama must be running on the host with `phi4-mini:3.8b` pulled. On Docker Desktop (Windows and Mac) the `--add-host` flag is not needed. The container indexes the documents each time it starts, which takes a few seconds, and its index is not kept when it stops. To use your own documents, mount a folder over `/app/data/docs` (`-v "$PWD/mydocs:/app/data/docs"`) with one sub-folder per group, and your own users file over `/app/eval/users.yaml`. In CI the image is built, ingests the 30 documents, and answers a question with a 503 when no model is running.
 
 ## What is not covered
 
