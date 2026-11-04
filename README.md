@@ -12,7 +12,7 @@ pip install -e .                  # Python 3.11 or newer
 ollama pull phi4-mini:3.8b        # needs Ollama running: https://ollama.com
 rag ingest                        # indexes the 30 demo documents in data/docs
 rag ask "Which HTTP status code do throttled requests receive?" --user eng
-rag serve                         # API on http://127.0.0.1:8000
+rag serve                         # API and a browser page on http://127.0.0.1:8000
 ```
 
 ## Demo: same question, two users
@@ -159,6 +159,10 @@ All settings live in `config.yaml`. The retrieval and answering values below wer
 
 The demo keys (`demo-key-guest`, `demo-key-eng`, `demo-key-fin`, `demo-key-admin`) are public on purpose. Do not use them for real data.
 
+## Browser page
+
+`rag serve` also serves a page at `/`. Ginger (a golden retriever) fetches the answer and Simba (a black Labrador) guards what you cannot read. Each cited source is a gold tag: click it to see the page's text with the passage Ginger read lightly highlighted and the sentence closest to the answer highlighted strongly, and, for PDFs, to open the original PDF at that page. With `demo_mode: true` a visitor can start a private shelf and add their own file (see below). `data/demo_upload/` holds a small PDF to try and `questions.md` with 15 questions and their right answers.
+
 ## Demo mode
 
 Set `demo_mode: true` in `config.yaml` to let a visitor try the system with their own file. `POST /session` gives a private group and a key. `POST /upload` adds a PDF, Markdown or text file to that group only. The visitor can then ask about their own file and the public documents, and nothing else: another visitor's files, `engineering` and `finance` stay out of the search. A session and its files are deleted after `demo_ttl_seconds`, when the server stops, and at the next start if it crashed. This is for a local demo; the upload checks are in the results table above.
@@ -172,6 +176,8 @@ Send the key in the `X-API-Key` header.
 | `GET /health` | anyone | none | `{"status": "ok"}` |
 | `POST /ask` | any valid key | `{"question": "...", "explain": false}` | `answer`, `sources`, `found`, `provenance` (document, page, group, uploader, date), and `explanation` if `explain` is true |
 | `POST /ingest` | users in `admin_users` | none | counts of documents added, skipped and removed, and chunks written |
+| `GET /source?chunk=ID` | any valid key | none | the cited passage inside its page (`before`, `highlight`, `after`, `page`), for documents the key may read |
+| `GET /file?doc=ID` | any valid key | none | the original file, for documents the key may read |
 | `POST /session` | anyone, only if `demo_mode` is on | none | `key`, `group`, `groups`, `expires_in_seconds`, limits |
 | `POST /upload` | a demo session key | raw file bytes, file name in the `X-Filename` header | `file`, `chunks`, `pages_without_text`, `files_used` |
 
@@ -191,6 +197,8 @@ TBC
 
 - **Self-test.** The same person wrote the documents, the questions and the code. This is not an independent benchmark. The independent set is TBC.
 - **Small sets.** 4 injection cases, 4 poison cases, 6 PDF questions. Treat those results as indications.
+- **Source highlighting.** The page marks the passage Ginger read and the sentence closest to the answer, taken from the indexed text. It does not highlight inside the PDF itself, and the PDF opens at the right page only (a browser's PDF viewer cannot take a highlight from a link).
+- **Retrieval misses.** The small embedding model can rank other documents above the right one: with the 30 public demo documents in the search, "How much is the yearly membership fee?" missed the PDF's 18-pound line and returned the fixed not-found reply (seen once, by hand, on the demo PDF; not part of the pre-registered results).
 - **Demo mode.** Open uploads are meant for a local demo at `127.0.0.1`. Exposing them to the internet needs HTTPS, rate limits and abuse protection, which are not part of this repo. The upload check used generated text, five sessions and one machine.
 - **Sign-in.** API keys are a lookup against stored hashes. There is no user management, HTTPS or rate limiting; run the service behind a reverse proxy if you expose it.
 - **Timing.** Searches are padded to a fixed 20 ms, but 2.29% ran longer in the check (see Results), and padding must be raised for a larger index. The model step is not padded. Reply length for "not found" is fixed at 104 bytes.
@@ -218,6 +226,7 @@ TBC
 - [x] Hashed API keys and `rag new-key`
 - [x] Demo sessions with private uploads (API; a browser page is next)
 - [ ] Docker image and CI build
+- [ ] Highlight inside the PDF page itself (needs a PDF viewer library)
 - [ ] Independent question set (TBC)
 - [ ] Several groups per document
 - [ ] Scale check at 1,000 and 10,000 documents
