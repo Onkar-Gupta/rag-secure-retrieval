@@ -45,9 +45,11 @@ def create_app(cfg, users, col, llm, embedding_function=None):
                 raise HTTPException(status_code=503, detail="the language model is not available") from None
             db.log_query(conn, name, question, [h["chunk_id"] for h in trace if h["used"]], result["found"],
                          (time.perf_counter() - start) * 1000, keep_text=cfg.get("log_question_text", False))
+            provenance = db.provenance(conn, result["sources"])  # built after the model call; model never sees it
         finally:
             conn.close()
-        body = {"answer": result["answer"], "sources": result["sources"], "found": result["found"]}
+        body = {"answer": result["answer"], "sources": result["sources"], "found": result["found"],
+                "provenance": provenance}
         if req.explain:
             body["explanation"] = generator.explanation(result, trace, cfg["relevance_threshold"])
         return body

@@ -7,14 +7,14 @@ import pytest
 from fastapi.testclient import TestClient
 from test_retriever import KeywordEmbedder
 
-from rag_secure import serve
+from rag_secure import security, serve
 from rag_secure.ingest import ingest, open_collection
 
 NF = "I could not find an answer in the documents you can access."
 USERS = {
-    "guest": {"groups": ["public"], "api_key": "k-guest"},
-    "eng": {"groups": ["public", "engineering"], "api_key": "k-eng"},
-    "admin": {"groups": ["public", "engineering", "finance"], "api_key": "k-admin"},
+    "guest": {"groups": ["public"], "api_key_hash": security.hash_key("k-guest")},
+    "eng": {"groups": ["public", "engineering"], "api_key_hash": security.hash_key("k-eng")},
+    "admin": {"groups": ["public", "engineering", "finance"], "api_key_hash": security.hash_key("k-admin")},
 }
 DOCS = {"finance": "budget", "engineering": "deploy", "public": "holiday"}
 
@@ -75,7 +75,7 @@ def test_a_user_without_access_gets_the_fixed_reply_and_the_model_is_never_calle
     client, _ = build(tmp_path, llm=never)
     r = post(client, "k-guest", "budget")
     assert r.status_code == 200
-    assert r.json() == {"answer": NF, "sources": [], "found": False}
+    assert r.json() == {"answer": NF, "sources": [], "found": False, "provenance": []}
     assert "finance" not in r.text and "budget.md" not in r.text
 
 
@@ -163,3 +163,29 @@ def test_rejected_requests_leave_no_log_row(app):
     post(client, "wrong", "deploy")
     post(client, "k-eng", "x" * 500)
     assert sqlite3.connect(cfg["db_path"]).execute("SELECT COUNT(*) FROM query_log").fetchone() == (0,)
+
+
+def test_every_source_carries_provenance_and_the_model_never_sees_it(tmp_path):
+    seen = []
+
+    def spy(system, user):
+        seen.append(system + user)
+        return fake_llm(system, user)
+
+    client, _ = build(tmp_path, llm=spy)
+    body = post(client, "k-eng", "deploy").json()
+    assert body["sources"] == ["engineering/deploy.md#0000"]
+    [p] = body["provenance"]
+    assert set(p) == {"chunk_id", "doc_id", "group", "uploader", "ingested_at"}
+    assert p["doc_id"] == "engineering/deploy.md" and p["group"] == "engineering" and p["uploader"] == "cli"
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", p["ingested_at"])
+    assert all("uploader" not in text and "ingested_at" not in text for text in seen)  # response-only data
+
+
+def test_provenance_follows_the_uploader_and_a_quarantined_source_never_appears(app):
+    client, cfg = app
+    from rag_secure import db
+
+    db.set_quarantine(db.connect(cfg["db_path"]), "engineering/deploy.md")
+    body = post(client, "k-eng", "deploy").json()
+    assert body["sources"] == [] and body["provenance"] == [] and body["found"] is False

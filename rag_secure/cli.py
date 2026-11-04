@@ -20,8 +20,14 @@ def main(argv=None):
     a.add_argument("--no-delimit", action="store_true", help="do not wrap context in DOC/END markers")
     a.add_argument("--explain", action="store_true", help="also show which chunks were retrieved and used")
     sub.add_parser("serve", help="start the HTTP service")
+    sub.add_parser("new-key", help="make a random API key and the line to paste into the users file")
     args = parser.parse_args(argv)
     if args.command is None:
+        return
+    if args.command == "new-key":
+        key, digest = security.new_key()
+        print(f"API key (shown once, give it to the user): {key}")
+        print(f'users file line:  api_key_hash: "{digest}"')
         return
     with open(args.config, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
@@ -49,6 +55,8 @@ def main(argv=None):
         )
         print(result["answer"])
         print("sources:", ", ".join(result["sources"]) or "none")
+        for p in db.provenance(db.connect(cfg["db_path"]), result["sources"]):
+            print(f"  {p['chunk_id']}: group {p['group']}, uploaded by {p['uploader']} on {p['ingested_at']}")
         if args.explain:
             why = generator.explanation(result, trace, cfg["relevance_threshold"])
             print(f"outcome: {why['outcome']} (cut-off {why['cutoff']:.4f})")

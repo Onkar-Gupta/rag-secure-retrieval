@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 from pathlib import Path
 
@@ -58,6 +59,10 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
         sha = f"{hashlib.sha256(path.read_bytes()).hexdigest()}:{size}:{overlap}"
         row = conn.execute("SELECT sha256 FROM documents WHERE doc_id=?", (doc_id,)).fetchone()
         if row and row[0] == sha:
+            # a database made before the date column existed: fill the date in once, change nothing else
+            conn.execute("UPDATE documents SET ingested_at=? WHERE doc_id=? AND ingested_at IS NULL",
+                         (datetime.date.today().isoformat(), doc_id))
+            conn.commit()
             counts["skipped"] += 1
             continue
         col.delete(where={"doc_id": doc_id})
@@ -72,9 +77,10 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
             col.add(ids=ids, documents=texts, metadatas=metas)
         # Upsert, not replace: a changed file must keep its quarantine flag.
         conn.execute(
-            "INSERT INTO documents (doc_id, grp, sha256, uploader) VALUES (?,?,?,?) "
-            "ON CONFLICT(doc_id) DO UPDATE SET grp=excluded.grp, sha256=excluded.sha256, uploader=excluded.uploader",
-            (doc_id, grp, sha, uploader),
+            "INSERT INTO documents (doc_id, grp, sha256, uploader, ingested_at) VALUES (?,?,?,?,?) "
+            "ON CONFLICT(doc_id) DO UPDATE SET grp=excluded.grp, sha256=excluded.sha256, "
+            "uploader=excluded.uploader, ingested_at=excluded.ingested_at",
+            (doc_id, grp, sha, uploader, datetime.date.today().isoformat()),
         )
         conn.executemany(
             "INSERT INTO chunks VALUES (?,?,?,?)",

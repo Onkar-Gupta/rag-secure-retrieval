@@ -32,7 +32,8 @@ def test_quarantine_command(tmp_path, capsys):
 def test_ask_rejects_unknown_user_and_bad_questions_before_any_model_call(tmp_path):
     cfg = tmp_path / "config.yaml"
     users = tmp_path / "users.yaml"
-    users.write_text("users:\n  guest:\n    groups: [public]\n    api_key: k\n", encoding="utf-8")
+    users.write_text(
+        "users:\n  guest:\n    groups: [public]\n    api_key_hash: '" + "0" * 64 + "'\n", encoding="utf-8")
     cfg.write_text(f"users_file: {users.as_posix()}\nmax_question_chars: 20\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="unknown user"):
         main(["--config", str(cfg), "ask", "hello", "--user", "nobody"])
@@ -40,3 +41,15 @@ def test_ask_rejects_unknown_user_and_bad_questions_before_any_model_call(tmp_pa
         main(["--config", str(cfg), "ask", "x" * 30, "--user", "guest"])
     with pytest.raises(SystemExit, match="control or invisible"):
         main(["--config", str(cfg), "ask", "hi" + chr(0x200B) + "there", "--user", "guest"])
+
+
+def test_new_key_prints_a_key_once_and_a_matching_quoted_hash_line(capsys):
+    import re
+
+    from rag_secure import security
+
+    main(["new-key"])
+    out = capsys.readouterr().out
+    key = re.search(r"give it to the user\): (\S+)", out).group(1)
+    line = re.search(r'api_key_hash: "([0-9a-f]{64})"', out).group(1)
+    assert security.hash_key(key) == line and key not in line

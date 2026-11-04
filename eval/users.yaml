@@ -1,13 +1,16 @@
+# Demo users. The file stores only SHA-256 hashes of the API keys.
+# The demo keys are public on purpose, so anyone can try the service: demo-key-guest, demo-key-eng,
+# demo-key-fin, demo-key-admin. For your own users run `rag new-key` and paste the printed line here (the hash stays in quotes).
 users:
   guest:
     groups: [public]
-    api_key: TBC-key-guest
+    api_key_hash: "81570de566ecfb896fa1e46ebc08df69aaed37f2a90e078ec061e6289c1d1816"
   eng:
     groups: [public, engineering]
-    api_key: TBC-key-eng
+    api_key_hash: "a5223350a25354ec41b039e58260da854648513c85abdd33ded264a61f7751a3"
   fin:
     groups: [public, finance]
-    api_key: TBC-key-fin
+    api_key_hash: "749aad1158c6a69f78ec0db8e6682bdc87177c1859584b1df49458b5d53d8418"
   admin:
     groups: [public, engineering, finance]
-    api_key: TBC-key-admin
+    api_key_hash: "0de55245c225238646d6fdb99a60b6971bf5eb0b0280237830d66e0a8b54b4ac"

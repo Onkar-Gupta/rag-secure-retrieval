@@ -21,16 +21,16 @@ def test_every_demo_user_maps_to_its_own_groups(users):
     expected = {"guest": ["public"], "eng": ["public", "engineering"],
                 "fin": ["public", "finance"], "admin": ["public", "engineering", "finance"]}
     for name, groups in expected.items():
-        assert security.user_for_key(users, users[name]["api_key"]) == (name, groups)
+        assert security.user_for_key(users, f"demo-key-{name}") == (name, groups)
 
 
-@pytest.mark.parametrize("bad", [None, "", "wrong-key", "TBC-key-guest ", "tbc-key-guest", 123, ["x"]])
+@pytest.mark.parametrize("bad", [None, "", "wrong-key", "demo-key-guest ", "DEMO-KEY-GUEST", 123, ["x"]])
 def test_unknown_or_malformed_keys_are_rejected(users, bad):
     assert security.user_for_key(users, bad) is None
 
 
 def test_a_key_never_unlocks_another_users_groups(users):
-    name, groups = security.user_for_key(users, users["guest"]["api_key"])
+    name, groups = security.user_for_key(users, "demo-key-guest")
     assert name == "guest" and "finance" not in groups and "engineering" not in groups
 
 
@@ -86,3 +86,59 @@ def test_old_database_without_uploader_column_is_upgraded(tmp_path):
     old.close()
     conn = db.connect(tmp_path / "old.sqlite")
     assert conn.execute("SELECT uploader, quarantined FROM documents").fetchone() == (None, 0)
+
+
+def test_hashes_are_sha256_hex_and_new_keys_are_random_and_work(users):
+    assert security.hash_key("abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    k1, h1 = security.new_key()
+    k2, h2 = security.new_key()
+    assert k1 != k2 and h1 != h2 and len(k1) >= 40 and h1 == security.hash_key(k1)
+    mine = {"me": {"groups": ["public"], "api_key_hash": h1}}
+    assert security.user_for_key(mine, k1) == ("me", ["public"]) and security.user_for_key(mine, k2) is None
+
+
+def test_the_users_file_holds_no_plaintext_key():
+    text = USERS.read_text(encoding="utf-8")
+    for name in ("guest", "eng", "fin", "admin"):
+        assert f"demo-key-{name}" not in text.replace("demo-key-guest, demo-key-eng,", "").replace(
+            "demo-key-fin, demo-key-admin", "").replace("demo-key-<", "")  # only the comment names them
+
+
+def write_users(tmp_path, body):
+    path = tmp_path / "u.yaml"
+    path.write_text(body, encoding="utf-8")
+    return path
+
+
+def test_load_users_fails_loudly_on_bad_entries(tmp_path):
+    good = "a" * 64
+    with pytest.raises(ValueError, match="64 hex"):
+        security.load_users(write_users(tmp_path, "users:\n  x:\n    groups: [public]\n    api_key: plain\n"))
+    with pytest.raises(ValueError, match="64 hex"):
+        security.load_users(write_users(tmp_path, "users:\n  x:\n    groups: [public]\n    api_key_hash: ABC\n"))
+    with pytest.raises(ValueError, match="no groups"):
+        security.load_users(write_users(tmp_path, f"users:\n  x:\n    groups: []\n    api_key_hash: {good}\n"))
+    both = f"users:\n  x:\n    groups: [public]\n    api_key_hash: {good}\n  y:\n    groups: [finance]\n    api_key_hash: {good}\n"
+    with pytest.raises(ValueError, match="share one API key"):
+        security.load_users(write_users(tmp_path, both))
+
+
+def test_a_hash_made_only_of_digits_still_loads_when_quoted(tmp_path):
+    path = write_users(tmp_path, "users:\n  x:\n    groups: [public]\n    api_key_hash: '" + "1" * 64 + "'\n")
+    assert security.load_users(path)["x"]["api_key_hash"] == "1" * 64
+
+
+def test_ingest_date_is_filled_in_once_for_documents_from_an_older_database(tmp_path):
+    docs = tmp_path / "docs"
+    (docs / "public").mkdir(parents=True)
+    (docs / "public" / "a.md").write_text("x" * 25, encoding="utf-8")
+    ingest(docs, tmp_path / "c", tmp_path / "t.sqlite", 10, 3, FakeEmbedder(), uploader="admin")
+    conn = sqlite3.connect(tmp_path / "t.sqlite")
+    conn.execute("UPDATE documents SET ingested_at=NULL")  # what an older database looks like
+    conn.commit()
+    ingest(docs, tmp_path / "c", tmp_path / "t.sqlite", 10, 3, FakeEmbedder(), uploader="someone else")
+    row = conn.execute("SELECT uploader, ingested_at FROM documents").fetchone()
+    assert row[0] == "admin" and row[1] is not None  # date backfilled; the recorded uploader is not overwritten
+    first = row[1]
+    ingest(docs, tmp_path / "c", tmp_path / "t.sqlite", 10, 3, FakeEmbedder())
+    assert conn.execute("SELECT ingested_at FROM documents").fetchone() == (first,)
