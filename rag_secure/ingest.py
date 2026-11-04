@@ -54,6 +54,16 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
     if not docs_dir.is_dir():
         raise FileNotFoundError(f"{docs_dir} is not a folder (refusing to treat every document as deleted)")
     conn = db.connect(db_path)
+    try:
+        return _ingest(conn, docs_dir, chroma_dir, size, overlap, embedding_function, uploader, min_page_chars)
+    except BaseException:
+        conn.rollback()  # a file that cannot be read must not leave a half-done transaction open
+        raise
+    finally:
+        conn.close()
+
+
+def _ingest(conn, docs_dir, chroma_dir, size, overlap, embedding_function, uploader, min_page_chars):
     col = open_collection(chroma_dir, embedding_function)
     counts = {"added": 0, "skipped": 0, "chunks": 0, "removed": 0, "pages_without_text": []}
     on_disk = set()
@@ -71,10 +81,11 @@ def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None
             conn.commit()
             counts["skipped"] += 1
             continue
+        pages = read_pages(path)  # before any delete: an unreadable file leaves the old index intact
         col.delete(where={"doc_id": doc_id})
         conn.execute("DELETE FROM chunks WHERE doc_id=?", (doc_id,))
         ids, texts, metas = [], [], []
-        for page, text in read_pages(path):
+        for page, text in pages:
             if page is not None and len(text) < min_page_chars:  # a scanned page has no text layer
                 counts["pages_without_text"].append(f"{doc_id} page {page}")
             for piece in chunk_text(text, size, overlap):
