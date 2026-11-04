@@ -1,0 +1,97 @@
+{
+ "stage": "tune",
+ "split": "dev",
+ "rule": "highest dev hit rate@5 under D; ties: higher balanced accuracy, then smaller chunk size, then smaller overlap; threshold maximises balanced accuracy, ties to the largest cut-off",
+ "top_k": 5,
+ "grid": [
+  {
+   "chunk_size": 300,
+   "overlap": 0,
+   "chunks": 125,
+   "dev_hit_rate_at_5_D": 0.95,
+   "dev_answerable": 20,
+   "threshold": 0.6079088449478149,
+   "balanced_accuracy": 0.7749999999999999,
+   "gold_chunks_per_question": 1.0
+  },
+  {
+   "chunk_size": 300,
+   "overlap": 100,
+   "chunks": 163,
+   "dev_hit_rate_at_5_D": 0.95,
+   "dev_answerable": 20,
+   "threshold": 0.6079088449478149,
+   "balanced_accuracy": 0.8,
+   "gold_chunks_per_question": 1.05
+  },
+  {
+   "chunk_size": 500,
+   "overlap": 0,
+   "chunks": 84,
+   "dev_hit_rate_at_5_D": 0.95,
+   "dev_answerable": 20,
+   "threshold": 0.43860846757888794,
+   "balanced_accuracy": 0.75,
+   "gold_chunks_per_question": 1.0
+  },
+  {
+   "chunk_size": 500,
+   "overlap": 100,
+   "chunks": 92,
+   "dev_hit_rate_at_5_D": 0.95,
+   "dev_answerable": 20,
+   "threshold": 0.5626645088195801,
+   "balanced_accuracy": 0.7,
+   "gold_chunks_per_question": 1.0
+  },
+  {
+   "chunk_size": 800,
+   "overlap": 0,
+   "chunks": 60,
+   "dev_hit_rate_at_5_D": 0.9,
+   "dev_answerable": 20,
+   "threshold": 0.5263515114784241,
+   "balanced_accuracy": 0.8,
+   "gold_chunks_per_question": 1.0
+  },
+  {
+   "chunk_size": 800,
+   "overlap": 100,
+   "chunks": 61,
+   "dev_hit_rate_at_5_D": 0.9,
+   "dev_answerable": 20,
+   "threshold": 0.5228217840194702,
+   "balanced_accuracy": 0.775,
+   "gold_chunks_per_question": 1.0
+  }
+ ],
+ "chosen": {
+  "chunk_size": 300,
+  "overlap": 100,
+  "chunks": 163,
+  "dev_hit_rate_at_5_D": 0.95,
+  "dev_answerable": 20,
+  "threshold": 0.6079088449478149,
+  "balanced_accuracy": 0.8,
+  "gold_chunks_per_question": 1.05
+ },
+ "meta": {
+  "date": "2026-11-04T16:47:31+05:30",
+  "commit": "bf025cc1a5517ca19133d56898488fbb21d14502",
+  "working_tree_dirty": true,
+  "python": "3.11.9",
+  "os": "Windows-10-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "cpu_threads": 22,
+  "ram_gb": 15.4,
+  "gpu": "not used (ONNX Runtime on CPU)",
+  "packages": {
+   "chromadb": "1.5.9",
+   "onnxruntime": "1.31.1",
+   "pypdf": "6.21.4",
+   "PyYAML": "6.0.3"
+  },
+  "embedding_model": "chroma default all-MiniLM-L6-v2 (ONNX)",
+  "bootstrap": "10000 resamples, seed 0"
+ }
+}
