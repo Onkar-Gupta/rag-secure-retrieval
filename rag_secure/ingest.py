@@ -32,14 +32,19 @@ def group_of(path, docs_dir):
     return parts[0]
 
 
+def open_collection(chroma_dir, embedding_function=None):
+    """The one Chroma collection of chunks. Cosine distance. Default embedder unless one is given."""
+    kwargs = {"embedding_function": embedding_function} if embedding_function else {}
+    return chromadb.PersistentClient(path=str(chroma_dir)).get_or_create_collection(
+        "chunks", configuration={"hnsw": {"space": "cosine"}}, **kwargs
+    )
+
+
 def ingest(docs_dir, chroma_dir, db_path, size, overlap, embedding_function=None):
     """Chunk every document, store vectors in Chroma and text in SQLite. Unchanged files are skipped."""
     docs_dir = Path(docs_dir)
     conn = db.connect(db_path)
-    kwargs = {"embedding_function": embedding_function} if embedding_function else {}
-    col = chromadb.PersistentClient(path=str(chroma_dir)).get_or_create_collection(
-        "chunks", configuration={"hnsw": {"space": "cosine"}}, **kwargs
-    )
+    col = open_collection(chroma_dir, embedding_function)
     counts = {"added": 0, "skipped": 0, "chunks": 0}
     for path in sorted(p for p in docs_dir.rglob("*") if p.suffix in SUFFIXES):
         grp = group_of(path, docs_dir)
