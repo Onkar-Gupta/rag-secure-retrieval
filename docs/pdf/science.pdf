@@ -1,0 +1,54 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 260 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Physics) Tj T* () Tj T* (Water boils at 100 degrees Celsius at sea level. The speed of light in a vacuum) Tj T* (is 299,792,458 metres per second. Light from the Sun takes a little over 8) Tj T* (minutes to reach the Earth.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 252 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (The solar system) Tj T* () Tj T* (The solar system has eight planets. Jupiter is the largest planet. The planet) Tj T* (closest to the Sun is Mercury. The Earth takes about 365 days to go once round) Tj T* (the Sun.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 9 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 294 >>
+stream
+BT /F1 11 Tf 15 TL 40 740 Td (Life and chemistry) Tj T* () Tj T* (James Watson and Francis Crick described the double helix structure of DNA in) Tj T* (1953. Plants use photosynthesis to turn light, water and carbon dioxide into) Tj T* (sugars and oxygen. Carbon has the atomic number 6.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000253 00000 n 
+0000000564 00000 n 
+0000000690 00000 n 
+0000000993 00000 n 
+0000001119 00000 n 
+0000001464 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+1534
+%%EOF

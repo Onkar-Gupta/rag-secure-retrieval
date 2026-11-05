@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ginger &amp; Simba: replay</title>
+<meta name="description" content="A replay of real answers from a local RAG system with document-level access control. Pick a topic, read the PDF, ask one of five questions.">
+<link rel="icon" href="img/ginger_waiting.png">
+<link rel="stylesheet" href="app.css">
+<style>.problem{margin:24px 0 16px}footer a{color:var(--ink)}.panel{margin-bottom:24px}</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <h1><span class="ln">Ginger</span><span class="ln">&amp; Simba</span></h1>
+      <p id="say" class="say"></p>
+      <p id="sub" class="sub"></p>
+    </div>
+    <div class="hero-dog">
+      <img id="mascot" src="img/simba_welcome.png" alt="" width="300" height="320">
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="problem" id="notice"></p>
+
+  <section id="topics" class="panel" style="max-width:none">
+    <div class="body">
+      <h2>1. Pick a topic</h2>
+      <p class="hint">Each topic is one short PDF. Ginger may only read the PDF you pick.</p>
+      <div id="topic-list" class="row"></div>
+    </div>
+  </section>
+
+  <div id="app" class="layout" hidden>
+    <div class="main-col">
+      <section class="ask">
+        <h2>2. Ask one of the five questions</h2>
+        <ul id="questions" class="files"></ul>
+      </section>
+      <section id="answer" aria-live="polite"></section>
+    </div>
+    <aside class="shelf" aria-labelledby="shelf-title">
+      <h2 id="shelf-title">The PDF</h2>
+      <p id="pdf-blurb" class="hint"></p>
+      <a id="pdf-link" class="btn secondary" target="_blank" rel="noopener">Open the PDF</a>
+      <p class="hint">Read it first if you like, then check each answer against it. One question per topic is not in the PDF on purpose.</p>
+    </aside>
+  </div>
+</main>
+
+<dialog id="viewer" aria-labelledby="v-title">
+  <div class="v-head">
+    <h2 id="v-title"></h2>
+    <button class="link" id="v-close" type="button">Close</button>
+  </div>
+  <p id="v-meta" class="hint"></p>
+  <p id="v-passage" class="passage"></p>
+  <a id="v-pdf" class="btn secondary" target="_blank" rel="noopener"></a>
+</dialog>
+
+<footer class="wrap">
+  <p id="foot"></p>
+  <p>The answers above are saved from one real run on a laptop. They were not written by hand and are not generated in your browser. <a href="https://github.com/Onkar-Gupta/rag-secure-retrieval">Code, results and the live version</a>.</p>
+</footer>
+<script src="replay-data.js"></script>
+<script src="replay.js"></script>
+</body>
+</html>
