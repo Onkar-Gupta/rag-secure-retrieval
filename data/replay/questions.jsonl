@@ -1,0 +1,15 @@
+{"id": "r01", "topic": "general_knowledge", "kind": "answerable", "question": "What is the capital of Australia?", "right_answer": "Canberra", "where": "page 1"}
+{"id": "r02", "topic": "general_knowledge", "kind": "answerable", "question": "How tall is Mount Everest?", "right_answer": "8,849 metres", "where": "page 1"}
+{"id": "r03", "topic": "general_knowledge", "kind": "answerable", "question": "Who proposed the World Wide Web, and in which year?", "right_answer": "Tim Berners-Lee, 1989", "where": "page 2"}
+{"id": "r04", "topic": "general_knowledge", "kind": "answerable", "question": "How many bones does an adult human body have?", "right_answer": "206", "where": "page 3"}
+{"id": "r05", "topic": "general_knowledge", "kind": "absent", "question": "What is the population of Canberra?", "right_answer": "not in the document: should say it could not find an answer", "where": "none"}
+{"id": "r06", "topic": "literature", "kind": "answerable", "question": "Who wrote Pride and Prejudice, and when was it published?", "right_answer": "Jane Austen, 1813", "where": "page 1"}
+{"id": "r07", "topic": "literature", "kind": "answerable", "question": "In which year was Frankenstein first published?", "right_answer": "1818", "where": "page 1"}
+{"id": "r08", "topic": "literature", "kind": "answerable", "question": "Who tells the story of Moby-Dick?", "right_answer": "Ishmael", "where": "page 2"}
+{"id": "r09", "topic": "literature", "kind": "answerable", "question": "At which castle is Hamlet set?", "right_answer": "Elsinore", "where": "page 2"}
+{"id": "r10", "topic": "literature", "kind": "absent", "question": "Which actor first played Sherlock Holmes on stage?", "right_answer": "not in the document: should say it could not find an answer", "where": "none"}
+{"id": "r11", "topic": "science", "kind": "answerable", "question": "At what temperature does water boil at sea level?", "right_answer": "100 degrees Celsius", "where": "page 1"}
+{"id": "r12", "topic": "science", "kind": "answerable", "question": "What is the speed of light in a vacuum?", "right_answer": "299,792,458 metres per second", "where": "page 1"}
+{"id": "r13", "topic": "science", "kind": "answerable", "question": "Which planet is the largest?", "right_answer": "Jupiter", "where": "page 2"}
+{"id": "r14", "topic": "science", "kind": "answerable", "question": "In which year did Watson and Crick describe the structure of DNA?", "right_answer": "1953", "where": "page 3"}
+{"id": "r15", "topic": "science", "kind": "absent", "question": "What is the boiling point of mercury?", "right_answer": "not in the document: should say it could not find an answer", "where": "none"}
