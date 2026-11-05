@@ -5,6 +5,8 @@ Local RAG where each document belongs to an access group, and the group filter r
 [![tests](https://github.com/Onkar-Gupta/rag-secure-retrieval/actions/workflows/tests.yml/badge.svg)](https://github.com/Onkar-Gupta/rag-secure-retrieval/actions/workflows/tests.yml)
 [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
+**Try it without installing anything:** [the replay page](https://onkar-gupta.github.io/rag-secure-retrieval/). Pick a topic, open its PDF, ask one of five questions and see the saved answer with its source. It is a replay of one real run, so it takes no new questions.
+
 ## Quick Start
 
 ```bash
@@ -70,6 +72,7 @@ Four designs were compared. **A** no control. **B** prompt-only: the model is to
 | Demo sessions: own document in the top 5 / own answers citing it | 48 of 50 / 21 of 25 (the other 4 were the fixed not-found reply) | [`upload_check.json`](reports/upload_check.json) |
 | Search time for `guest`, full index vs public-only index, no padding | 2.133 ms vs 2.077 ms; difference +0.053 ms (95% interval +0.049 to +0.056 ms) | [`timing_probe.json`](reports/timing_probe.json) |
 | Same check with every search padded to 20 ms | Difference 0.0000 ms (95% interval -0.0001 to +0.0001 ms). 2.29% of searches ran past the 20 ms floor (limit was 0.1%), so the check is reported as failed | [`timing_probe_padded_20ms.json`](reports/timing_probe_padded_20ms.json) |
+| Replay set (3 PDFs, 15 questions, each topic read as its own group): answerable questions correct / not-found questions answered with the fixed reply / answers citing the right page | 12 of 12 / 3 of 3 / 12 of 12 (checked by hand) | [`replay.json`](reports/replay.json) |
 | Independent question set written by someone other than the code author | TBC | |
 
 What these numbers do and do not show:
@@ -114,7 +117,8 @@ rag_secure/      ingest.py  retriever.py  generator.py  security.py  serve.py  d
 eval/            protocol.md  run_eval.py  questions.jsonl  pdf_questions.jsonl  users.yaml
 data/docs/       30 fictional Markdown documents in public/, engineering/, finance/ (CC0)
 data/docs_pdf/   6 fictional PDFs for the PDF check (CC0)
-scripts/         make_pdf_set.py  timing_probe.py
+scripts/         make_pdf_set.py  timing_probe.py  make_replay_pdfs.py  build_replay_page.py
+docs/            the static replay page served by GitHub Pages (rebuilt from reports/replay.json)
 reports/         one JSON file per run, kept as produced
 tests/           pytest suite (includes a guard that fails if any evaluation input changes)
 config.yaml      every setting
@@ -162,6 +166,8 @@ The demo keys (`demo-key-guest`, `demo-key-eng`, `demo-key-fin`, `demo-key-admin
 ## Browser page
 
 `rag serve` also serves a page at `/`. Ginger (a golden retriever) fetches the answer and Simba (a black Labrador) guards what you cannot read. Each cited source is a gold tag: click it to see the page's text with the passage Ginger read lightly highlighted and the sentence closest to the answer highlighted strongly, and, for PDFs, to open the original PDF at that page. With `demo_mode: true` a visitor can start a private shelf and add their own file (see below). `data/demo_upload/` holds a small PDF to try and `questions.md` with 15 questions and their right answers.
+
+The replay page in `docs/` shows saved answers from a real run over three short PDFs (`data/replay/`: general knowledge, literature, science), five questions each, one of which the PDF does not answer. Rebuild it with `python scripts/build_replay_page.py`. It cannot take new questions, because the answers come from a local model.
 
 ## Demo mode
 
