@@ -1,0 +1,920 @@
+{
+ "meta": {
+  "date": "2026-11-05T15:46:32+05:30",
+  "commit": "54a75ab6e8b5f792c1f6eec7696884909daf996e",
+  "working_tree_dirty": false,
+  "python": "3.11.9",
+  "os": "Windows-10-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+  "cpu_threads": 22,
+  "ram_gb": 15.4,
+  "gpu": "not used (ONNX Runtime on CPU)",
+  "packages": {
+   "chromadb": "1.5.9",
+   "onnxruntime": "1.31.1",
+   "pypdf": "6.21.4",
+   "PyYAML": "6.0.3"
+  },
+  "embedding_model": "chroma default all-MiniLM-L6-v2 (ONNX)",
+  "bootstrap": "10000 resamples, seed 0"
+ },
+ "settings": {
+  "chunk_size": 300,
+  "chunk_overlap": 100,
+  "top_k": 5,
+  "relevance_threshold": 0.6079088449478149,
+  "model": "phi4-mini:3.8b",
+  "temperature": 0,
+  "seed": 0
+ },
+ "rows": [
+  {
+   "id": "r01",
+   "topic": "general_knowledge",
+   "kind": "answerable",
+   "question": "What is the capital of Australia?",
+   "right_answer": "Canberra",
+   "where": "page 1",
+   "answer": "The capital of Australia is Canberra [general_knowledge/general_knowledge.pdf#0000].",
+   "found": true,
+   "sources": [
+    "general_knowledge/general_knowledge.pdf#0000"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "general_knowledge/general_knowledge.pdf#0000",
+     "doc_id": "general_knowledge/general_knowledge.pdf",
+     "group": "general_knowledge",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 1
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "general_knowledge/general_knowledge.pdf",
+     "page": 1,
+     "before": "",
+     "highlight": "Places The capital of Australia is Canberra, not Sydney or Melbourne. Mount Everest is the highest mountain above sea level, at 8,849 metres. The Pacific Ocean is the largest ocean on Earth. Vatican City is the smallest country in the world by area.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0000",
+      "group": "general_knowledge",
+      "distance": 0.3603,
+      "used": true,
+      "cited": true,
+      "snippet": "Places The capital of Australia is Canberra, not Sydney or Melbourne. Mount Everest is the highest mountain above sea level, at 8,849 metres. The Pacific Ocean "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0002",
+      "group": "general_knowledge",
+      "distance": 0.8326,
+      "used": false,
+      "cited": false,
+      "snippet": "The body and the calendar An adult human body has 206 bones. A leap year has 366 days and comes round every four years, with some exceptions for century years. "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0001",
+      "group": "general_knowledge",
+      "distance": 1.071,
+      "used": false,
+      "cited": false,
+      "snippet": "Inventions and events The World Wide Web was proposed by Tim Berners-Lee in 1989, while he worked at CERN. The first people to walk on the Moon were Neil Armstr"
+     }
+    ]
+   },
+   "latency_ms": 10687
+  },
+  {
+   "id": "r02",
+   "topic": "general_knowledge",
+   "kind": "answerable",
+   "question": "How tall is Mount Everest?",
+   "right_answer": "8,849 metres",
+   "where": "page 1",
+   "answer": "Mount Everest is 8,849 metres tall [general_knowledge/general_knowledge.pdf#0000].",
+   "found": true,
+   "sources": [
+    "general_knowledge/general_knowledge.pdf#0000"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "general_knowledge/general_knowledge.pdf#0000",
+     "doc_id": "general_knowledge/general_knowledge.pdf",
+     "group": "general_knowledge",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 1
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "general_knowledge/general_knowledge.pdf",
+     "page": 1,
+     "before": "",
+     "highlight": "Places The capital of Australia is Canberra, not Sydney or Melbourne. Mount Everest is the highest mountain above sea level, at 8,849 metres. The Pacific Ocean is the largest ocean on Earth. Vatican City is the smallest country in the world by area.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0000",
+      "group": "general_knowledge",
+      "distance": 0.6035,
+      "used": true,
+      "cited": true,
+      "snippet": "Places The capital of Australia is Canberra, not Sydney or Melbourne. Mount Everest is the highest mountain above sea level, at 8,849 metres. The Pacific Ocean "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0002",
+      "group": "general_knowledge",
+      "distance": 0.7651,
+      "used": false,
+      "cited": false,
+      "snippet": "The body and the calendar An adult human body has 206 bones. A leap year has 366 days and comes round every four years, with some exceptions for century years. "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0001",
+      "group": "general_knowledge",
+      "distance": 0.8691,
+      "used": false,
+      "cited": false,
+      "snippet": "Inventions and events The World Wide Web was proposed by Tim Berners-Lee in 1989, while he worked at CERN. The first people to walk on the Moon were Neil Armstr"
+     }
+    ]
+   },
+   "latency_ms": 3220
+  },
+  {
+   "id": "r03",
+   "topic": "general_knowledge",
+   "kind": "answerable",
+   "question": "Who proposed the World Wide Web, and in which year?",
+   "right_answer": "Tim Berners-Lee, 1989",
+   "where": "page 2",
+   "answer": "The World Wide Web was proposed by Tim Berners-Lee in 1989 [general_knowledge/general_knowledge.pdf#0001].",
+   "found": true,
+   "sources": [
+    "general_knowledge/general_knowledge.pdf#0001"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "general_knowledge/general_knowledge.pdf#0001",
+     "doc_id": "general_knowledge/general_knowledge.pdf",
+     "group": "general_knowledge",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 2
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "general_knowledge/general_knowledge.pdf",
+     "page": 2,
+     "before": "",
+     "highlight": "Inventions and events The World Wide Web was proposed by Tim Berners-Lee in 1989, while he worked at CERN. The first people to walk on the Moon were Neil Armstrong and Buzz Aldrin, during the Apollo 11 mission in July 1969. The Berlin Wall came down in November 1989.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0001",
+      "group": "general_knowledge",
+      "distance": 0.4491,
+      "used": true,
+      "cited": true,
+      "snippet": "Inventions and events The World Wide Web was proposed by Tim Berners-Lee in 1989, while he worked at CERN. The first people to walk on the Moon were Neil Armstr"
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0002",
+      "group": "general_knowledge",
+      "distance": 0.9206,
+      "used": false,
+      "cited": false,
+      "snippet": "The body and the calendar An adult human body has 206 bones. A leap year has 366 days and comes round every four years, with some exceptions for century years. "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0000",
+      "group": "general_knowledge",
+      "distance": 0.9665,
+      "used": false,
+      "cited": false,
+      "snippet": "Places The capital of Australia is Canberra, not Sydney or Melbourne. Mount Everest is the highest mountain above sea level, at 8,849 metres. The Pacific Ocean "
+     }
+    ]
+   },
+   "latency_ms": 3326
+  },
+  {
+   "id": "r04",
+   "topic": "general_knowledge",
+   "kind": "answerable",
+   "question": "How many bones does an adult human body have?",
+   "right_answer": "206",
+   "where": "page 3",
+   "answer": "An adult human body has 206 bones [general_knowledge/general_knowledge.pdf#0002].",
+   "found": true,
+   "sources": [
+    "general_knowledge/general_knowledge.pdf#0002"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "general_knowledge/general_knowledge.pdf#0002",
+     "doc_id": "general_knowledge/general_knowledge.pdf",
+     "group": "general_knowledge",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 3
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "general_knowledge/general_knowledge.pdf",
+     "page": 3,
+     "before": "",
+     "highlight": "The body and the calendar An adult human body has 206 bones. A leap year has 366 days and comes round every four years, with some exceptions for century years. There are seven continents: Africa, Antarctica, Asia, Australia, Europe, North America and South America.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0002",
+      "group": "general_knowledge",
+      "distance": 0.402,
+      "used": true,
+      "cited": true,
+      "snippet": "The body and the calendar An adult human body has 206 bones. A leap year has 366 days and comes round every four years, with some exceptions for century years. "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0000",
+      "group": "general_knowledge",
+      "distance": 0.9186,
+      "used": false,
+      "cited": false,
+      "snippet": "Places The capital of Australia is Canberra, not Sydney or Melbourne. Mount Everest is the highest mountain above sea level, at 8,849 metres. The Pacific Ocean "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0001",
+      "group": "general_knowledge",
+      "distance": 0.9688,
+      "used": false,
+      "cited": false,
+      "snippet": "Inventions and events The World Wide Web was proposed by Tim Berners-Lee in 1989, while he worked at CERN. The first people to walk on the Moon were Neil Armstr"
+     }
+    ]
+   },
+   "latency_ms": 3280
+  },
+  {
+   "id": "r05",
+   "topic": "general_knowledge",
+   "kind": "absent",
+   "question": "What is the population of Canberra?",
+   "right_answer": "not in the document: should say it could not find an answer",
+   "where": "none",
+   "answer": "I could not find an answer in the documents you can access.",
+   "found": false,
+   "sources": [],
+   "provenance": [],
+   "passages": [],
+   "explanation": {
+    "outcome": "not_found",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0000",
+      "group": "general_knowledge",
+      "distance": 0.6076,
+      "used": true,
+      "cited": false,
+      "snippet": "Places The capital of Australia is Canberra, not Sydney or Melbourne. Mount Everest is the highest mountain above sea level, at 8,849 metres. The Pacific Ocean "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0002",
+      "group": "general_knowledge",
+      "distance": 0.7537,
+      "used": false,
+      "cited": false,
+      "snippet": "The body and the calendar An adult human body has 206 bones. A leap year has 366 days and comes round every four years, with some exceptions for century years. "
+     },
+     {
+      "chunk_id": "general_knowledge/general_knowledge.pdf#0001",
+      "group": "general_knowledge",
+      "distance": 1.0405,
+      "used": false,
+      "cited": false,
+      "snippet": "Inventions and events The World Wide Web was proposed by Tim Berners-Lee in 1989, while he worked at CERN. The first people to walk on the Moon were Neil Armstr"
+     }
+    ]
+   },
+   "latency_ms": 3284
+  },
+  {
+   "id": "r06",
+   "topic": "literature",
+   "kind": "answerable",
+   "question": "Who wrote Pride and Prejudice, and when was it published?",
+   "right_answer": "Jane Austen, 1813",
+   "where": "page 1",
+   "answer": "Jane Austen wrote Pride and Prejudice, and it was published in 1813 [literature/literature.pdf#0000].",
+   "found": true,
+   "sources": [
+    "literature/literature.pdf#0000"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "literature/literature.pdf#0000",
+     "doc_id": "literature/literature.pdf",
+     "group": "literature",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 1
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "literature/literature.pdf",
+     "page": 1,
+     "before": "",
+     "highlight": "Novels of the 1800s Pride and Prejudice was written by Jane Austen and published in 1813. It follows Elizabeth Bennet and her changing opinion of the proud Mr Darcy. Frankenstein was written by Mary Shelley and first published in 1818. Its main character is the scientist Victor Frankenstein.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "literature/literature.pdf#0000",
+      "group": "literature",
+      "distance": 0.2102,
+      "used": true,
+      "cited": true,
+      "snippet": "Novels of the 1800s Pride and Prejudice was written by Jane Austen and published in 1813. It follows Elizabeth Bennet and her changing opinion of the proud Mr D"
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0001",
+      "group": "literature",
+      "distance": 0.6562,
+      "used": false,
+      "cited": false,
+      "snippet": "The sea and the stage Moby-Dick was written by Herman Melville and published in 1851. The story is told by a sailor who asks the reader to call him Ishmael, and"
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0002",
+      "group": "literature",
+      "distance": 0.6914,
+      "used": false,
+      "cited": false,
+      "snippet": "A detective Sherlock Holmes was created by Arthur Conan Doyle. He first appeared in the novel A Study in Scarlet, published in 1887. Holmes lives at 221B Baker "
+     }
+    ]
+   },
+   "latency_ms": 3426
+  },
+  {
+   "id": "r07",
+   "topic": "literature",
+   "kind": "answerable",
+   "question": "In which year was Frankenstein first published?",
+   "right_answer": "1818",
+   "where": "page 1",
+   "answer": "Frankenstein was first published in 1818 [literature/literature.pdf#0000].",
+   "found": true,
+   "sources": [
+    "literature/literature.pdf#0000"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "literature/literature.pdf#0000",
+     "doc_id": "literature/literature.pdf",
+     "group": "literature",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 1
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "literature/literature.pdf",
+     "page": 1,
+     "before": "",
+     "highlight": "Novels of the 1800s Pride and Prejudice was written by Jane Austen and published in 1813. It follows Elizabeth Bennet and her changing opinion of the proud Mr Darcy. Frankenstein was written by Mary Shelley and first published in 1818. Its main character is the scientist Victor Frankenstein.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "literature/literature.pdf#0000",
+      "group": "literature",
+      "distance": 0.4138,
+      "used": true,
+      "cited": true,
+      "snippet": "Novels of the 1800s Pride and Prejudice was written by Jane Austen and published in 1813. It follows Elizabeth Bennet and her changing opinion of the proud Mr D"
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0002",
+      "group": "literature",
+      "distance": 0.6326,
+      "used": false,
+      "cited": false,
+      "snippet": "A detective Sherlock Holmes was created by Arthur Conan Doyle. He first appeared in the novel A Study in Scarlet, published in 1887. Holmes lives at 221B Baker "
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0001",
+      "group": "literature",
+      "distance": 0.8061,
+      "used": false,
+      "cited": false,
+      "snippet": "The sea and the stage Moby-Dick was written by Herman Melville and published in 1851. The story is told by a sailor who asks the reader to call him Ishmael, and"
+     }
+    ]
+   },
+   "latency_ms": 3378
+  },
+  {
+   "id": "r08",
+   "topic": "literature",
+   "kind": "answerable",
+   "question": "Who tells the story of Moby-Dick?",
+   "right_answer": "Ishmael",
+   "where": "page 2",
+   "answer": "Ishmael tells the story of Moby-Dick [literature/literature.pdf#0001].",
+   "found": true,
+   "sources": [
+    "literature/literature.pdf#0001"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "literature/literature.pdf#0001",
+     "doc_id": "literature/literature.pdf",
+     "group": "literature",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 2
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "literature/literature.pdf",
+     "page": 2,
+     "before": "",
+     "highlight": "The sea and the stage Moby-Dick was written by Herman Melville and published in 1851. The story is told by a sailor who asks the reader to call him Ishmael, and it follows Captain Ahab\u2019s hunt for a white whale. Hamlet is a play by William Shakespeare. It is set at the castle of Elsinore in Denmark.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "literature/literature.pdf#0001",
+      "group": "literature",
+      "distance": 0.4205,
+      "used": true,
+      "cited": true,
+      "snippet": "The sea and the stage Moby-Dick was written by Herman Melville and published in 1851. The story is told by a sailor who asks the reader to call him Ishmael, and"
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0002",
+      "group": "literature",
+      "distance": 0.7601,
+      "used": false,
+      "cited": false,
+      "snippet": "A detective Sherlock Holmes was created by Arthur Conan Doyle. He first appeared in the novel A Study in Scarlet, published in 1887. Holmes lives at 221B Baker "
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0000",
+      "group": "literature",
+      "distance": 0.8151,
+      "used": false,
+      "cited": false,
+      "snippet": "Novels of the 1800s Pride and Prejudice was written by Jane Austen and published in 1813. It follows Elizabeth Bennet and her changing opinion of the proud Mr D"
+     }
+    ]
+   },
+   "latency_ms": 3272
+  },
+  {
+   "id": "r09",
+   "topic": "literature",
+   "kind": "answerable",
+   "question": "At which castle is Hamlet set?",
+   "right_answer": "Elsinore",
+   "where": "page 2",
+   "answer": "Hamlet is set at the castle of Elsinore in Denmark [literature/literature.pdf#0001].",
+   "found": true,
+   "sources": [
+    "literature/literature.pdf#0001"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "literature/literature.pdf#0001",
+     "doc_id": "literature/literature.pdf",
+     "group": "literature",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 2
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "literature/literature.pdf",
+     "page": 2,
+     "before": "",
+     "highlight": "The sea and the stage Moby-Dick was written by Herman Melville and published in 1851. The story is told by a sailor who asks the reader to call him Ishmael, and it follows Captain Ahab\u2019s hunt for a white whale. Hamlet is a play by William Shakespeare. It is set at the castle of Elsinore in Denmark.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "literature/literature.pdf#0001",
+      "group": "literature",
+      "distance": 0.5411,
+      "used": true,
+      "cited": true,
+      "snippet": "The sea and the stage Moby-Dick was written by Herman Melville and published in 1851. The story is told by a sailor who asks the reader to call him Ishmael, and"
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0000",
+      "group": "literature",
+      "distance": 0.8702,
+      "used": false,
+      "cited": false,
+      "snippet": "Novels of the 1800s Pride and Prejudice was written by Jane Austen and published in 1813. It follows Elizabeth Bennet and her changing opinion of the proud Mr D"
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0002",
+      "group": "literature",
+      "distance": 0.888,
+      "used": false,
+      "cited": false,
+      "snippet": "A detective Sherlock Holmes was created by Arthur Conan Doyle. He first appeared in the novel A Study in Scarlet, published in 1887. Holmes lives at 221B Baker "
+     }
+    ]
+   },
+   "latency_ms": 3026
+  },
+  {
+   "id": "r10",
+   "topic": "literature",
+   "kind": "absent",
+   "question": "Which actor first played Sherlock Holmes on stage?",
+   "right_answer": "not in the document: should say it could not find an answer",
+   "where": "none",
+   "answer": "I could not find an answer in the documents you can access.",
+   "found": false,
+   "sources": [],
+   "provenance": [],
+   "passages": [],
+   "explanation": {
+    "outcome": "not_found",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "literature/literature.pdf#0002",
+      "group": "literature",
+      "distance": 0.4768,
+      "used": true,
+      "cited": false,
+      "snippet": "A detective Sherlock Holmes was created by Arthur Conan Doyle. He first appeared in the novel A Study in Scarlet, published in 1887. Holmes lives at 221B Baker "
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0001",
+      "group": "literature",
+      "distance": 0.8105,
+      "used": false,
+      "cited": false,
+      "snippet": "The sea and the stage Moby-Dick was written by Herman Melville and published in 1851. The story is told by a sailor who asks the reader to call him Ishmael, and"
+     },
+     {
+      "chunk_id": "literature/literature.pdf#0000",
+      "group": "literature",
+      "distance": 0.9139,
+      "used": false,
+      "cited": false,
+      "snippet": "Novels of the 1800s Pride and Prejudice was written by Jane Austen and published in 1813. It follows Elizabeth Bennet and her changing opinion of the proud Mr D"
+     }
+    ]
+   },
+   "latency_ms": 3120
+  },
+  {
+   "id": "r11",
+   "topic": "science",
+   "kind": "answerable",
+   "question": "At what temperature does water boil at sea level?",
+   "right_answer": "100 degrees Celsius",
+   "where": "page 1",
+   "answer": "Water boils at 100 degrees Celsius at sea level [science/science.pdf#0000].",
+   "found": true,
+   "sources": [
+    "science/science.pdf#0000"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "science/science.pdf#0000",
+     "doc_id": "science/science.pdf",
+     "group": "science",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 1
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "science/science.pdf",
+     "page": 1,
+     "before": "",
+     "highlight": "Physics Water boils at 100 degrees Celsius at sea level. The speed of light in a vacuum is 299,792,458 metres per second. Light from the Sun takes a little over 8 minutes to reach the Earth.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "science/science.pdf#0000",
+      "group": "science",
+      "distance": 0.3599,
+      "used": true,
+      "cited": true,
+      "snippet": "Physics Water boils at 100 degrees Celsius at sea level. The speed of light in a vacuum is 299,792,458 metres per second. Light from the Sun takes a little over"
+     },
+     {
+      "chunk_id": "science/science.pdf#0002",
+      "group": "science",
+      "distance": 0.9091,
+      "used": false,
+      "cited": false,
+      "snippet": "Life and chemistry James Watson and Francis Crick described the double helix structure of DNA in 1953. Plants use photosynthesis to turn light, water and carbon"
+     },
+     {
+      "chunk_id": "science/science.pdf#0001",
+      "group": "science",
+      "distance": 0.992,
+      "used": false,
+      "cited": false,
+      "snippet": "The solar system The solar system has eight planets. Jupiter is the largest planet. The planet closest to the Sun is Mercury. The Earth takes about 365 days to "
+     }
+    ]
+   },
+   "latency_ms": 3129
+  },
+  {
+   "id": "r12",
+   "topic": "science",
+   "kind": "answerable",
+   "question": "What is the speed of light in a vacuum?",
+   "right_answer": "299,792,458 metres per second",
+   "where": "page 1",
+   "answer": "The speed of light in a vacuum is 299,792,458 metres per second [science/science.pdf#0000].",
+   "found": true,
+   "sources": [
+    "science/science.pdf#0000"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "science/science.pdf#0000",
+     "doc_id": "science/science.pdf",
+     "group": "science",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 1
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "science/science.pdf",
+     "page": 1,
+     "before": "",
+     "highlight": "Physics Water boils at 100 degrees Celsius at sea level. The speed of light in a vacuum is 299,792,458 metres per second. Light from the Sun takes a little over 8 minutes to reach the Earth.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "science/science.pdf#0000",
+      "group": "science",
+      "distance": 0.45,
+      "used": true,
+      "cited": true,
+      "snippet": "Physics Water boils at 100 degrees Celsius at sea level. The speed of light in a vacuum is 299,792,458 metres per second. Light from the Sun takes a little over"
+     },
+     {
+      "chunk_id": "science/science.pdf#0001",
+      "group": "science",
+      "distance": 0.888,
+      "used": false,
+      "cited": false,
+      "snippet": "The solar system The solar system has eight planets. Jupiter is the largest planet. The planet closest to the Sun is Mercury. The Earth takes about 365 days to "
+     },
+     {
+      "chunk_id": "science/science.pdf#0002",
+      "group": "science",
+      "distance": 0.9485,
+      "used": false,
+      "cited": false,
+      "snippet": "Life and chemistry James Watson and Francis Crick described the double helix structure of DNA in 1953. Plants use photosynthesis to turn light, water and carbon"
+     }
+    ]
+   },
+   "latency_ms": 3172
+  },
+  {
+   "id": "r13",
+   "topic": "science",
+   "kind": "answerable",
+   "question": "Which planet is the largest?",
+   "right_answer": "Jupiter",
+   "where": "page 2",
+   "answer": "Jupiter is the largest planet [science/science.pdf#0001].",
+   "found": true,
+   "sources": [
+    "science/science.pdf#0001"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "science/science.pdf#0001",
+     "doc_id": "science/science.pdf",
+     "group": "science",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 2
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "science/science.pdf",
+     "page": 2,
+     "before": "",
+     "highlight": "The solar system The solar system has eight planets. Jupiter is the largest planet. The planet closest to the Sun is Mercury. The Earth takes about 365 days to go once round the Sun.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "science/science.pdf#0001",
+      "group": "science",
+      "distance": 0.2901,
+      "used": true,
+      "cited": true,
+      "snippet": "The solar system The solar system has eight planets. Jupiter is the largest planet. The planet closest to the Sun is Mercury. The Earth takes about 365 days to "
+     },
+     {
+      "chunk_id": "science/science.pdf#0000",
+      "group": "science",
+      "distance": 0.8463,
+      "used": false,
+      "cited": false,
+      "snippet": "Physics Water boils at 100 degrees Celsius at sea level. The speed of light in a vacuum is 299,792,458 metres per second. Light from the Sun takes a little over"
+     },
+     {
+      "chunk_id": "science/science.pdf#0002",
+      "group": "science",
+      "distance": 0.8474,
+      "used": false,
+      "cited": false,
+      "snippet": "Life and chemistry James Watson and Francis Crick described the double helix structure of DNA in 1953. Plants use photosynthesis to turn light, water and carbon"
+     }
+    ]
+   },
+   "latency_ms": 3029
+  },
+  {
+   "id": "r14",
+   "topic": "science",
+   "kind": "answerable",
+   "question": "In which year did Watson and Crick describe the structure of DNA?",
+   "right_answer": "1953",
+   "where": "page 3",
+   "answer": "James Watson and Francis Crick described the double helix structure of DNA in 1953 [science/science.pdf#0002].",
+   "found": true,
+   "sources": [
+    "science/science.pdf#0002"
+   ],
+   "provenance": [
+    {
+     "chunk_id": "science/science.pdf#0002",
+     "doc_id": "science/science.pdf",
+     "group": "science",
+     "uploader": "cli",
+     "ingested_at": "2026-11-05",
+     "page": 3
+    }
+   ],
+   "passages": [
+    {
+     "doc_id": "science/science.pdf",
+     "page": 3,
+     "before": "",
+     "highlight": "Life and chemistry James Watson and Francis Crick described the double helix structure of DNA in 1953. Plants use photosynthesis to turn light, water and carbon dioxide into sugars and oxygen. Carbon has the atomic number 6.",
+     "after": ""
+    }
+   ],
+   "explanation": {
+    "outcome": "answered",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "science/science.pdf#0002",
+      "group": "science",
+      "distance": 0.275,
+      "used": true,
+      "cited": true,
+      "snippet": "Life and chemistry James Watson and Francis Crick described the double helix structure of DNA in 1953. Plants use photosynthesis to turn light, water and carbon"
+     },
+     {
+      "chunk_id": "science/science.pdf#0000",
+      "group": "science",
+      "distance": 0.9476,
+      "used": false,
+      "cited": false,
+      "snippet": "Physics Water boils at 100 degrees Celsius at sea level. The speed of light in a vacuum is 299,792,458 metres per second. Light from the Sun takes a little over"
+     },
+     {
+      "chunk_id": "science/science.pdf#0001",
+      "group": "science",
+      "distance": 0.9761,
+      "used": false,
+      "cited": false,
+      "snippet": "The solar system The solar system has eight planets. Jupiter is the largest planet. The planet closest to the Sun is Mercury. The Earth takes about 365 days to "
+     }
+    ]
+   },
+   "latency_ms": 3490
+  },
+  {
+   "id": "r15",
+   "topic": "science",
+   "kind": "absent",
+   "question": "What is the boiling point of mercury?",
+   "right_answer": "not in the document: should say it could not find an answer",
+   "where": "none",
+   "answer": "I could not find an answer in the documents you can access.",
+   "found": false,
+   "sources": [],
+   "provenance": [],
+   "passages": [],
+   "explanation": {
+    "outcome": "not_found",
+    "cutoff": 0.6079088449478149,
+    "retrieved": [
+     {
+      "chunk_id": "science/science.pdf#0000",
+      "group": "science",
+      "distance": 0.6005,
+      "used": true,
+      "cited": false,
+      "snippet": "Physics Water boils at 100 degrees Celsius at sea level. The speed of light in a vacuum is 299,792,458 metres per second. Light from the Sun takes a little over"
+     },
+     {
+      "chunk_id": "science/science.pdf#0001",
+      "group": "science",
+      "distance": 0.7789,
+      "used": false,
+      "cited": false,
+      "snippet": "The solar system The solar system has eight planets. Jupiter is the largest planet. The planet closest to the Sun is Mercury. The Earth takes about 365 days to "
+     },
+     {
+      "chunk_id": "science/science.pdf#0002",
+      "group": "science",
+      "distance": 0.8238,
+      "used": false,
+      "cited": false,
+      "snippet": "Life and chemistry James Watson and Francis Crick described the double helix structure of DNA in 1953. Plants use photosynthesis to turn light, water and carbon"
+     }
+    ]
+   },
+   "latency_ms": 3002
+  }
+ ]
+}
